@@ -1,0 +1,128 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MentalEase - Student Dashboard</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{% static 'students/css/dashboard.css' %}">
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- JS -->
+    <script src="{% static 'students/js/dashboard.js' %}" defer></script>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="#" class="navbar-logo">MentalEase</a>
+        <div class="profile-dropdown-container">
+            <div id="profilePic" class="profile-pic">{{ student.username|first }}</div>
+            <div id="profileDropdown" class="dropdown-menu">
+                <a href="{% url 'profile_page' %}" class="dropdown-item">My Profile</a>
+                <div class="dropdown-item" id="openModalBtn">Change Email</div>
+                <a href="{% url 'logout' %}" class="dropdown-item">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Background Orbs -->
+    <div class="gradient-background"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="floating-circle circle-1"></div>
+    <div class="floating-circle circle-2"></div>
+    <div class="floating-circle circle-3"></div>
+
+    <div class="page-container">
+        <div class="form-container"> 
+            <div class="form-card">
+                <div class="shimmer-effect"></div>
+
+                <header class="header">
+                    <h1>Welcome, <span class="student-name">{{ student.username }}</span>!</h1>
+                    <p class="subtitle">"Take care of your mind — you deserve peace."</p>
+                </header>
+
+                <div class="grid-container">
+                    <!-- Mood Logging -->
+                    <section class="card mood-card" id="moodCard">
+                        <div class="card-header"><h2>Daily Mood Log</h2></div>
+                        <div class="mood-entry-grid" id="moodEntryGrid">
+                            <div class="mood-icon" data-mood="ecstatic">🤩<span class="mood-label">Ecstatic</span></div>
+                            <div class="mood-icon" data-mood="amazing">🥳<span class="mood-label">Amazing</span></div>
+                            <div class="mood-icon" data-mood="happy">😊<span class="mood-label">Happy</span></div>
+                            <div class="mood-icon" data-mood="calm">😌<span class="mood-label">Calm</span></div>
+                            <div class="mood-icon" data-mood="neutral">😐<span class="mood-label">Neutral</span></div>
+                            <div class="mood-icon" data-mood="tired">🥱<span class="mood-label">Tired</span></div>
+                            <div class="mood-icon" data-mood="stressed">😤<span class="mood-label">Stressed</span></div>
+                            <div class="mood-icon" data-mood="anxious">😰<span class="mood-label">Anxious</span></div>
+                            <div class="mood-icon" data-mood="sad">😔<span class="mood-label">Sad</span></div>
+                            <div class="mood-icon" data-mood="awful">😭<span class="mood-label">Awful</span></div>
+                        </div>
+                        <button class="save-mood-btn" id="saveMoodBtn">Save Mood Entry</button>
+                        <p id="moodMessage">Mood saved successfully!</p>
+                    </section>
+
+                    <!-- Mood History & Trends -->
+                    <section class="card mood-card">
+                        <div class="card-header"><h2>Mood History & Trends</h2></div>
+                        <div id="moodBarChart" class="bar-chart"></div>
+                        <canvas id="moodChart"></canvas>
+                        <h3>Mood Log History</h3>
+                        <ul class="mood-history" id="moodHistoryList"></ul>
+                    </section>
+
+                    <!-- Reflective Journal -->
+                    <section class="card journal-card">
+                        <div class="card-header"><h2>Reflective Journal</h2></div>
+                        <textarea class="journal-textarea" placeholder="Write your thoughts..."></textarea>
+                        <div>
+                            <button class="journal-action-btn">Save New Entry</button>
+                            <a href="#" class="resource-link">View All Entries</a>
+                        </div>
+                    </section>
+
+                    <!-- Hotlines & Articles -->
+                    <section class="card hotline-card">
+                        <div class="card-header"><h2>Campus Hotlines</h2></div>
+                        <ul class="resource-list">
+                            <li>📞 CIT-U Wellness Center: <span class="hotline-number">123-4567</span></li>
+                            <li>📞 Cebu Lifeline: <span class="hotline-number">988</span></li>
+                            <li>📞 National Mental Health Crisis Line: <span class="hotline-number">1553</span></li>
+                        </ul>
+                    </section>
+
+                    <section class="card article-card">
+                        <div class="card-header"><h2>Wellness Guides & Articles</h2></div>
+                        <ul class="resource-list">
+                            <li><a href="https://www.who.int/health-topics/mental-health" target="_blank">WHO: Mental Health Resources</a></li>
+                            <li><a href="https://www.psychologytoday.com/" target="_blank">Psychology Today</a></li>
+                            <li><a href="https://www.mind.org.uk/" target="_blank">Mind UK: Mental Health Support</a></li>
+                        </ul>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Modal -->
+    <div id="emailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Update Email Address</h3>
+                <button class="close-button" id="closeModalBtn">&times;</button>
+            </div>
+            <form id="emailChangeForm">
+                <input type="email" id="newEmailInput" placeholder="new.email@example.com" required class="form-input">
+                <button type="submit" class="save-button" id="saveEmailBtn">Save New Email</button>
+                <div id="saveMessage" class="save-message"></div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
