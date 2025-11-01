@@ -5,28 +5,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MentalEase - Student Dashboard</title>
-
-    <!-- CSS -->
     <link rel="stylesheet" href="{% static 'students/css/dashboard.css' %}">
-
-    <!-- Chart.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <!-- JS -->
-    <script src="{% static 'students/js/dashboard.js' %}" defer></script>
 </head>
 <body>
-    <!-- Navbar -->
+    
     <nav class="navbar">
         <a href="#" class="navbar-logo">MentalEase</a>
+        
         <div class="profile-dropdown-container">
-            <div id="profilePic" class="profile-pic">{{ student.first_name|first|upper }}{{ student.last_name|first|upper }}</div>
+            <div id="profilePic" class="profile-pic">z</div>
             <div id="profileDropdown" class="dropdown-menu">
-                <div style="padding: 1rem; border-bottom: 1px solid #e5e7eb; text-align: center;">
-                    <img src="{{ student.profile_image_url }}" class="profile-pic" style="width:50px; height:50px; margin-bottom:0.5rem;">
-                    <p style="margin:0; font-weight:600;">{{ student.username }}</p>
-                    <p style="margin:0; font-size:0.8rem; color:#717182;">{{ student.email }}</p>
-                </div>
                 <a href="{% url 'profile_page' %}" class="dropdown-item">My Profile</a>
                 <div class="dropdown-item" id="openModalBtn">Change Email</div>
                 <a href="{% url 'logout' %}" class="dropdown-item">Logout</a>
@@ -34,7 +22,7 @@
         </div>
     </nav>
 
-    <!-- Background Orbs -->
+    <!-- Background Orbs and Circles -->
     <div class="gradient-background"></div>
     <div class="orb orb-1"></div>
     <div class="orb orb-2"></div>
@@ -42,19 +30,20 @@
     <div class="floating-circle circle-1"></div>
     <div class="floating-circle circle-2"></div>
     <div class="floating-circle circle-3"></div>
-
+    
     <div class="page-container">
         <div class="form-container"> 
             <div class="form-card">
                 <div class="shimmer-effect"></div>
 
                 <header class="header">
+                    <svg class="header-icon" width="48" height="48">...</svg>
                     <h1>Welcome, <span class="student-name">{{ student.username }}</span>!</h1>
                     <p class="subtitle">"Take care of your mind — you deserve peace."</p>
                 </header>
 
                 <div class="grid-container">
-                    <!-- Mood Logging -->
+                    <!-- Mood Logging Card -->
                     <section class="card mood-card" id="moodCard">
                         <div class="card-header"><h2>Daily Mood Log</h2></div>
                         <div class="mood-entry-grid" id="moodEntryGrid">
@@ -73,16 +62,13 @@
                         <p id="moodMessage">Mood saved successfully!</p>
                     </section>
 
-                    <!-- Mood History & Trends -->
+                    <!-- Chart Placeholder Card -->
                     <section class="card mood-card">
                         <div class="card-header"><h2>Mood History & Trends</h2></div>
-                        <div id="moodBarChart" class="bar-chart"></div>
                         <canvas id="moodChart"></canvas>
-                        <h3>Mood Log History</h3>
-                        <ul class="mood-history" id="moodHistoryList"></ul>
                     </section>
 
-                    <!-- Reflective Journal -->
+                    <!-- Journal Card -->
                     <section class="card journal-card">
                         <div class="card-header"><h2>Reflective Journal</h2></div>
                         <textarea class="journal-textarea" placeholder="Write your thoughts..."></textarea>
@@ -94,7 +80,12 @@
 
                     <!-- Hotlines & Articles -->
                     <section class="card hotline-card">
-                        <div class="card-header"><h2>Campus Hotlines</h2></div>
+                        <div class="card-header">
+                            <svg class="section-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-3.67-2.94 19.5 19.5 0 0 1-2.94-3.67A19.79 19.79 0 0 1 2 4.18 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                            </svg>
+                            <h2>Campus Hotlines</h2>
+                        </div>
                         <ul class="resource-list">
                             <li>📞 CIT-U Wellness Center: <span class="hotline-number">123-4567</span></li>
                             <li>📞 Cebu Lifeline: <span class="hotline-number">988</span></li>
@@ -103,11 +94,17 @@
                     </section>
 
                     <section class="card article-card">
-                        <div class="card-header"><h2>Wellness Guides & Articles</h2></div>
+                        <div class="card-header">
+                            <svg class="section-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                            </svg>
+                            <h2>Wellness Guides & Articles</h2>
+                        </div>
                         <ul class="resource-list">
-                            <li><a href="https://www.who.int/health-topics/mental-health" target="_blank">WHO: Mental Health Resources</a></li>
-                            <li><a href="https://www.psychologytoday.com/" target="_blank">Psychology Today</a></li>
-                            <li><a href="https://www.mind.org.uk/" target="_blank">Mind UK: Mental Health Support</a></li>
+                            <li><a href="https://www.who.int/health-topics/mental-health" target="_blank" class="resource-link">WHO: Mental Health Resources</a></li>
+                            <li><a href="https://www.psychologytoday.com/" target="_blank" class="resource-link">Psychology Today</a></li>
+                            <li><a href="https://www.mind.org.uk/" target="_blank" class="resource-link">Mind UK: Mental Health Support</a></li>
                         </ul>
                     </section>
                 </div>
@@ -129,5 +126,7 @@
             </form>
         </div>
     </div>
+
+    <script src="{% static 'students/js/dashboard.js' %}"></script>
 </body>
 </html>
