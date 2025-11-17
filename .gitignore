@@ -1,0 +1,33 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+env/
+venv/
+.venv/
+
+# Django files
+db.sqlite3
+*.log
+*.pot
+*.py[cod]
+*.swp
+
+# Static files (optional if you generate them)
+staticfiles/
+
+# IDEs / editors
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Node / npm
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
