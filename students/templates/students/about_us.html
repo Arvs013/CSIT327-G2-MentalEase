@@ -6,36 +6,49 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MentalEase - About Us</title>
-    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-    <style>
-        /* Optional: Extra styling specific to About Us page */
-        .about-card p {
-            color: #4b5563;
-            font-size: 1rem;
-            line-height: 1.6;
-        }
-    </style>
+    <link rel="stylesheet" href="{% static 'students/css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'students/css/about_us.css' %}">
 </head>
 <body>
+    <!-- Navigation Bar -->
     <nav class="navbar">
-        <a href="{% url 'dashboard' %}" class="navbar-logo">MentalEase</a>
-        
-        <div class="navbar-links" style="display: flex; gap: 1rem;">
-            <a href="{% url 'dashboard' %}" style="color: #1a1a1a; font-weight: 500; text-decoration: none;">Dashboard</a>
-            <a href="{% url 'about_us' %}" style="color: #9333ea; font-weight: 500; text-decoration: none;">About Us</a>
-        </div>
+        <a href="{% url 'dashboard' %}" class="navbar-logo">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+            </svg>
+            <span>MentalEase</span>
+        </a>
 
+        <div class="navbar-links">
+            <a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a>
+            <a href="{% url 'about_us' %}" class="nav-link">About Us</a>
+        </div>
+        
         <div class="profile-dropdown-container">
-            <div id="profilePic" class="profile-pic">SU</div>
-            
+            <div id="profilePic" class="profile-pic" title="Profile menu">
+                {{ student.username|slice:":1"|upper }}
+            </div>
             <div id="profileDropdown" class="dropdown-menu">
-                <a href="{% url 'profile_page' %}" class="dropdown-item">My Profile</a>
-                <div class="dropdown-item" id="openModalBtn">Change Email</div>
-                <a href="{% url 'logout' %}" class="dropdown-item">Logout</a>
+                <a href="{% url 'profile_page' %}" class="dropdown-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    My Profile
+                </a>
+                <a href="{% url 'logout' %}" class="dropdown-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16 17 21 12 16 7"/>
+                        <line x1="21" x2="9" y1="12" y2="12"/>
+                    </svg>
+                    Logout
+                </a>
             </div>
         </div>
     </nav>
 
+    <!-- Background Orbs and Circles -->
     <div class="gradient-background"></div>
     <div class="orb orb-1"></div>
     <div class="orb orb-2"></div>
@@ -56,7 +69,7 @@
                         <path d="M12 10V6"/>
                         <path d="M12 18h.01"/>
                     </svg>
-                    <h1>About Us</h1>
+                    <h1>About <span class="student-name">Us</span></h1>
                     <p class="subtitle">"Helping students take care of their mental health, one day at a time."</p>
                 </header>
 
@@ -71,17 +84,6 @@
         </div>
     </div>
 
-    <script>
-        // Reuse existing dropdown and modal scripts from dashboard
-        const profilePic = document.getElementById('profilePic');
-        const profileDropdown = document.getElementById('profileDropdown');
-
-        profilePic.addEventListener('click', () => profileDropdown.classList.toggle('show'));
-        window.addEventListener('click', (e) => {
-            if (!profilePic.contains(e.target) && !profileDropdown.contains(e.target)) {
-                profileDropdown.classList.remove('show');
-            }
-        });
-    </script>
+    <script src="{% static 'students/js/about_us.js' %}"></script>
 </body>
 </html>

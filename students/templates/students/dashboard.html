@@ -6,18 +6,51 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MentalEase - Student Dashboard</title>
     <link rel="stylesheet" href="{% static 'students/css/dashboard.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
-<body>
+<body data-student-id="{{ student.id }}">
     
+    <!-- Navigation Bar -->
     <nav class="navbar">
-        <a href="#" class="navbar-logo">MentalEase</a>
+        <a href="{% url 'dashboard' %}" class="navbar-logo">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+            </svg>
+            <span>MentalEase</span>
+        </a>
+
+        <div class="navbar-links">
+            <a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a>
+            <a href="{% url 'about_us' %}" class="nav-link">About Us</a>
+        </div>
         
         <div class="profile-dropdown-container">
-            <div id="profilePic" class="profile-pic">z</div>
+            <div id="profilePic" class="profile-pic" title="Profile menu">
+                {{ student.username|slice:":1"|upper }}
+            </div>
             <div id="profileDropdown" class="dropdown-menu">
-                <a href="{% url 'profile_page' %}" class="dropdown-item">My Profile</a>
-                <div class="dropdown-item" id="openModalBtn">Change Email</div>
-                <a href="{% url 'logout' %}" class="dropdown-item">Logout</a>
+                <a href="{% url 'profile_page' %}" class="dropdown-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    My Profile
+                </a>
+                <div class="dropdown-item" id="openModalBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect width="20" height="16" x="2" y="4" rx="2"/>
+                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                    </svg>
+                    Change Email
+                </div>
+                <a href="{% url 'logout' %}" class="dropdown-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16 17 21 12 16 7"/>
+                        <line x1="21" x2="9" y1="12" y2="12"/>
+                    </svg>
+                    Logout
+                </a>
             </div>
         </div>
     </nav>
@@ -37,7 +70,10 @@
                 <div class="shimmer-effect"></div>
 
                 <header class="header">
-                    <svg class="header-icon" width="48" height="48">...</svg>
+                    <svg class="header-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2a10 10 0 0 1 7.07 17.07C17.66 20.49 14.95 22 12 22s-5.66-1.51-7.07-2.93A10 10 0 0 1 12 2z"/>
+                        <circle cx="12" cy="10" r="3"/>
+                    </svg>
                     <h1>Welcome, <span class="student-name">{{ student.username }}</span>!</h1>
                     <p class="subtitle">"Take care of your mind — you deserve peace."</p>
                 </header>
@@ -45,54 +81,147 @@
                 <div class="grid-container">
                     <!-- Mood Logging Card -->
                     <section class="card mood-card" id="moodCard">
-                        <div class="card-header"><h2>Daily Mood Log</h2></div>
+                        <div class="card-header">
+                            <svg class="section-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                                <line x1="9" x2="9.01" y1="9" y2="9"/>
+                                <line x1="15" x2="15.01" y1="9" y2="9"/>
+                            </svg>
+                            <h2>Daily Mood Log</h2>
+                        </div>
                         <div class="mood-entry-grid" id="moodEntryGrid">
-                            <div class="mood-icon" data-mood="ecstatic">🤩<span class="mood-label">Ecstatic</span></div>
-                            <div class="mood-icon" data-mood="amazing">🥳<span class="mood-label">Amazing</span></div>
-                            <div class="mood-icon" data-mood="happy">😊<span class="mood-label">Happy</span></div>
-                            <div class="mood-icon" data-mood="calm">😌<span class="mood-label">Calm</span></div>
-                            <div class="mood-icon" data-mood="neutral">😐<span class="mood-label">Neutral</span></div>
-                            <div class="mood-icon" data-mood="tired">🥱<span class="mood-label">Tired</span></div>
-                            <div class="mood-icon" data-mood="stressed">😤<span class="mood-label">Stressed</span></div>
-                            <div class="mood-icon" data-mood="anxious">😰<span class="mood-label">Anxious</span></div>
-                            <div class="mood-icon" data-mood="sad">😔<span class="mood-label">Sad</span></div>
-                            <div class="mood-icon" data-mood="awful">😭<span class="mood-label">Awful</span></div>
+                            <div class="mood-icon" data-mood="ecstatic" data-score="10">
+                                <span class="mood-emoji">🤩</span>
+                                <span class="mood-label">Ecstatic</span>
+                            </div>
+                            <div class="mood-icon" data-mood="amazing" data-score="9">
+                                <span class="mood-emoji">🥳</span>
+                                <span class="mood-label">Amazing</span>
+                            </div>
+                            <div class="mood-icon" data-mood="happy" data-score="8">
+                                <span class="mood-emoji">😊</span>
+                                <span class="mood-label">Happy</span>
+                            </div>
+                            <div class="mood-icon" data-mood="calm" data-score="7">
+                                <span class="mood-emoji">😌</span>
+                                <span class="mood-label">Calm</span>
+                            </div>
+                            <div class="mood-icon" data-mood="neutral" data-score="5">
+                                <span class="mood-emoji">😐</span>
+                                <span class="mood-label">Neutral</span>
+                            </div>
+                            <div class="mood-icon" data-mood="tired" data-score="4">
+                                <span class="mood-emoji">🥱</span>
+                                <span class="mood-label">Tired</span>
+                            </div>
+                            <div class="mood-icon" data-mood="stressed" data-score="3">
+                                <span class="mood-emoji">😤</span>
+                                <span class="mood-label">Stressed</span>
+                            </div>
+                            <div class="mood-icon" data-mood="anxious" data-score="2">
+                                <span class="mood-emoji">😰</span>
+                                <span class="mood-label">Anxious</span>
+                            </div>
+                            <div class="mood-icon" data-mood="sad" data-score="1">
+                                <span class="mood-emoji">😔</span>
+                                <span class="mood-label">Sad</span>
+                            </div>
+                            <div class="mood-icon" data-mood="awful" data-score="0">
+                                <span class="mood-emoji">😭</span>
+                                <span class="mood-label">Awful</span>
+                            </div>
                         </div>
                         <button class="save-mood-btn" id="saveMoodBtn">Save Mood Entry</button>
-                        <p id="moodMessage">Mood saved successfully!</p>
+                        <div id="moodMessage" class="mood-feedback"></div>
                     </section>
 
-                    <!-- Chart Placeholder Card -->
+                    <!-- Mood History Chart Card -->
                     <section class="card mood-card">
-                        <div class="card-header"><h2>Mood History & Trends</h2></div>
-                        <canvas id="moodChart"></canvas>
+                        <div class="card-header">
+                            <svg class="section-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" x2="12" y1="20" y2="10"/>
+                                <line x1="18" x2="18" y1="20" y2="4"/>
+                                <line x1="6" x2="6" y1="20" y2="16"/>
+                            </svg>
+                            <h2>Mood History & Trends</h2>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="moodChart"></canvas>
+                        </div>
+                        <div class="mood-history-section">
+                            <h3 class="history-title">Recent Entries</h3>
+                            <ul id="moodHistoryList" class="mood-history-list"></ul>
+                        </div>
                     </section>
 
                     <!-- Journal Card -->
                     <section class="card journal-card">
-                        <div class="card-header"><h2>Reflective Journal</h2></div>
-                        <textarea class="journal-textarea" placeholder="Write your thoughts..."></textarea>
-                        <div>
-                            <button class="journal-action-btn">Save New Entry</button>
-                            <a href="#" class="resource-link">View All Entries</a>
+                        <div class="card-header">
+                            <svg class="section-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                                <line x1="10" x2="16" y1="8" y2="8"/>
+                                <line x1="10" x2="16" y1="12" y2="12"/>
+                                <line x1="10" x2="14" y1="16" y2="16"/>
+                            </svg>
+                            <h2>Reflective Journal</h2>
                         </div>
+
+                        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+                        <textarea class="journal-textarea" id="journalTextarea" placeholder="Write your thoughts and reflections here..."></textarea>
+                        <div class="journal-actions">
+                            <button class="journal-action-btn" id="saveJournalBtn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                                    <polyline points="17 21 17 13 7 13 7 21"/>
+                                    <polyline points="7 3 7 8 15 8"/>
+                                </svg>
+                                Save Entry
+                            </button>
+                            <a href="{% url 'journal_entries' %}" class="resource-link view-entries-link">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                                </svg>
+                                View All Entries
+                            </a>
+                        </div>
+                        <div id="journalMessage" class="journal-feedback"></div>
                     </section>
 
-                    <!-- Hotlines & Articles -->
+                    <!-- Hotlines Card -->
                     <section class="card hotline-card">
                         <div class="card-header">
                             <svg class="section-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-3.67-2.94 19.5 19.5 0 0 1-2.94-3.67A19.79 19.79 0 0 1 2 4.18 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6.61-6.61A19.79 19.79 0 0 1 2 4.18 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
                             </svg>
                             <h2>Campus Hotlines</h2>
                         </div>
                         <ul class="resource-list">
-                            <li>📞 CIT-U Wellness Center: <span class="hotline-number">123-4567</span></li>
-                            <li>📞 Cebu Lifeline: <span class="hotline-number">988</span></li>
-                            <li>📞 National Mental Health Crisis Line: <span class="hotline-number">1553</span></li>
+                            <li>
+                                <svg class="resource-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6.61-6.61A19.79 19.79 0 0 1 2 4.18 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                                </svg>
+                                CIT-U Wellness Center: <span class="hotline-number">123-4567</span>
+                            </li>
+                            <li>
+                                <svg class="resource-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6.61-6.61A19.79 19.79 0 0 1 2 4.18 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                                </svg>
+                                Cebu Lifeline: <span class="hotline-number">988</span>
+                            </li>
+                            <li>
+                                <svg class="resource-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6.61-6.61A19.79 19.79 0 0 1 2 4.18 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                                </svg>
+                                National Mental Health Crisis Line: <span class="hotline-number">1553</span>
+                            </li>
                         </ul>
                     </section>
 
+                    <!-- Articles Card -->
                     <section class="card article-card">
                         <div class="card-header">
                             <svg class="section-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -102,9 +231,33 @@
                             <h2>Wellness Guides & Articles</h2>
                         </div>
                         <ul class="resource-list">
-                            <li><a href="https://www.who.int/health-topics/mental-health" target="_blank" class="resource-link">WHO: Mental Health Resources</a></li>
-                            <li><a href="https://www.psychologytoday.com/" target="_blank" class="resource-link">Psychology Today</a></li>
-                            <li><a href="https://www.mind.org.uk/" target="_blank" class="resource-link">Mind UK: Mental Health Support</a></li>
+                            <li>
+                                <svg class="resource-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                                </svg>
+                                <a href="https://www.who.int/health-topics/mental-health" target="_blank" class="resource-link">
+                                    WHO: Mental Health Resources
+                                </a>
+                            </li>
+                            <li>
+                                <svg class="resource-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                                </svg>
+                                <a href="https://www.psychologytoday.com/" target="_blank" class="resource-link">
+                                    Psychology Today
+                                </a>
+                            </li>
+                            <li>
+                                <svg class="resource-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                                </svg>
+                                <a href="https://www.mind.org.uk/" target="_blank" class="resource-link">
+                                    Mind UK: Mental Health Support
+                                </a>
+                            </li>
                         </ul>
                     </section>
                 </div>
@@ -117,7 +270,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Update Email Address</h3>
-                <button class="close-button" id="closeModalBtn">&times;</button>
+                <button class="close-button" id="closeModalBtn" aria-label="Close modal">&times;</button>
             </div>
             <form id="emailChangeForm">
                 <input type="email" id="newEmailInput" placeholder="new.email@example.com" required class="form-input">
@@ -127,6 +280,16 @@
         </div>
     </div>
 
+    <!-- Supabase library (only once!) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
+    <script>
+        window.CURRENT_STUDENT_ID = document.body.dataset.studentId;
+        const supabaseUrl = 'https://YOUR_SUPABASE_PROJECT_URL';
+        const supabaseKey = 'YOUR_SUPABASE_ANON_KEY';
+        window.supabase = supabase.createClient(supabaseUrl, supabaseKey);
+    </script>
+
+    <!-- Your scripts -->
     <script src="{% static 'students/js/dashboard.js' %}"></script>
 </body>
 </html>

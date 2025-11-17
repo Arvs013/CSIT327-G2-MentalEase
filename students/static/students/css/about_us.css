@@ -1,0 +1,24 @@
+/* Additional styles for About Us page */
+.about-card {
+    max-width: 48rem;
+}
+
+.about-card p {
+    color: #4b5563;
+    font-size: 1rem;
+    line-height: 1.8;
+    margin-bottom: 1.5rem;
+}
+
+.about-card p:last-child {
+    margin-bottom: 0;
+}
+
+.about-card section {
+    animation: fadeIn 0.6s ease-out 0.4s backwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}

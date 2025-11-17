@@ -1,0 +1,255 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MentalEase - My Profile</title>
+    <link rel="stylesheet" href="{% static 'students/css/profile.css' %}">
+</head>
+<body>
+    
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <a href="{% url 'dashboard' %}" class="navbar-logo">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+            </svg>
+            <span>MentalEase</span>
+        </a>
+
+        <div class="navbar-links">
+            <a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a>
+            <a href="{% url 'about_us' %}" class="nav-link">About Us</a>
+        </div>
+        
+        <div class="profile-dropdown-container">
+            <div id="profilePic" class="profile-pic" title="Profile menu">
+                {{ student.username|slice:":1"|upper }}
+            </div>
+            <div id="profileDropdown" class="dropdown-menu">
+                <a href="{% url 'profile_page' %}" class="dropdown-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    My Profile
+                </a>
+                <a href="{% url 'logout' %}" class="dropdown-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16 17 21 12 16 7"/>
+                        <line x1="21" x2="9" y1="12" y2="12"/>
+                    </svg>
+                    Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Background Orbs and Circles -->
+    <div class="gradient-background"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="floating-circle circle-1"></div>
+    <div class="floating-circle circle-2"></div>
+    <div class="floating-circle circle-3"></div>
+    
+    <div class="page-container">
+        <div class="form-container"> 
+            <div class="form-card">
+                <div class="shimmer-effect"></div>
+
+                <header class="header">
+                    <div class="profile-avatar-large">
+                        {{ student.username|slice:":1"|upper }}
+                    </div>
+                    <h1>My <span class="student-name">Profile</span></h1>
+                    <p class="subtitle">Manage your account information</p>
+                </header>
+
+                <!-- Back Button -->
+                <div class="action-bar">
+                    <a href="{% url 'dashboard' %}" class="back-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="m12 19-7-7 7-7"/>
+                            <path d="M19 12H5"/>
+                        </svg>
+                        Back to Dashboard
+                    </a>
+                </div>
+
+                <!-- Profile Information -->
+                <div class="profile-section">
+                    <div class="section-header">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                        <h2>Personal Information</h2>
+                    </div>
+
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label class="info-label">Username</label>
+                            <div class="info-value">
+                                <span id="usernameDisplay">{{ student.username }}</span>
+                                <button class="edit-icon-btn" id="editUsernameBtn">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                                        <path d="m15 5 4 4"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <label class="info-label">Email</label>
+                            <div class="info-value">
+                                <span id="emailDisplay">{{ student.email|default:"Not set" }}</span>
+                                <button class="edit-icon-btn" id="editEmailBtn">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                                        <path d="m15 5 4 4"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <label class="info-label">Member Since</label>
+                            <div class="info-value">
+                                <span>{{ student.date_joined|date:"F d, Y" }}</span>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <label class="info-label">Account Status</label>
+                            <div class="info-value">
+                                <span class="status-badge active">Active</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics Section -->
+                <div class="profile-section">
+                    <div class="section-header">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" x2="12" y1="20" y2="10"/>
+                            <line x1="18" x2="18" y1="20" y2="4"/>
+                            <line x1="6" x2="6" y1="20" y2="16"/>
+                        </svg>
+                        <h2>Your Activity</h2>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                            </svg>
+                            <div class="stat-number" id="journalCount">0</div>
+                            <div class="stat-label">Journal Entries</div>
+                        </div>
+
+                        <div class="stat-card">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                            </svg>
+                            <div class="stat-number" id="moodCount">0</div>
+                            <div class="stat-label">Mood Entries</div>
+                        </div>
+
+                        <div class="stat-card">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+                                <line x1="16" x2="16" y1="2" y2="6"/>
+                                <line x1="8" x2="8" y1="2" y2="6"/>
+                                <line x1="3" x2="21" y1="10" y2="10"/>
+                            </svg>
+                            <div class="stat-number" id="streakCount">0</div>
+                            <div class="stat-label">Day Streak</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Section -->
+                <div class="profile-section">
+                    <div class="section-header">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                        <h2>Security</h2>
+                    </div>
+
+                    <div class="security-actions">
+                        <button class="security-btn" id="changePasswordBtn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="16" r="1"/>
+                                <rect width="18" height="12" x="3" y="10" rx="2"/>
+                                <path d="M7 10V7a5 5 0 0 1 10 0v3"/>
+                            </svg>
+                            Change Password
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Username Modal -->
+    <div id="usernameModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Username</h3>
+                <button class="close-button" id="closeUsernameModal">&times;</button>
+            </div>
+            <form id="usernameForm">
+                <input type="text" id="usernameInput" class="form-input" placeholder="Enter new username" required>
+                <button type="submit" class="save-button">Save Changes</button>
+                <div id="usernameMessage" class="save-message"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Email Modal -->
+    <div id="emailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Email</h3>
+                <button class="close-button" id="closeEmailModal">&times;</button>
+            </div>
+            <form id="emailForm">
+                <input type="email" id="emailInput" class="form-input" placeholder="Enter new email" required>
+                <button type="submit" class="save-button">Save Changes</button>
+                <div id="emailMessage" class="save-message"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Change Password</h3>
+                <button class="close-button" id="closePasswordModal">&times;</button>
+            </div>
+            <form id="passwordForm">
+                <input type="password" id="currentPassword" class="form-input" placeholder="Current password" required>
+                <input type="password" id="newPassword" class="form-input" placeholder="New password" required>
+                <input type="password" id="confirmPassword" class="form-input" placeholder="Confirm new password" required>
+                <button type="submit" class="save-button">Change Password</button>
+                <div id="passwordMessage" class="save-message"></div>
+            </form>
+        </div>
+    </div>
+
+
+    <script src="{% static 'students/js/profile.js' %}"></script>
+</body>
+</html>

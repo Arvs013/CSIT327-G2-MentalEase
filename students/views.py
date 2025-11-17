@@ -81,9 +81,26 @@ def student_dashboard(request):
     return render(request, 'students/dashboard.html', {'student': student})
 
 #Student Profile
-# Student Profile
 def student_profile(request):
     student = request.session.get('student', None)
     if not student:
         return redirect('login')
-    return render(request, 'students/profile_modal.html', {'student': student})
+    return render(request, 'students/profile.html', {'student': student})
+
+#About Us
+def about_us(request):
+    return render(request, 'students/about_us.html')
+
+def journal_entries(request):
+    student = request.session.get('student', None)
+    if not student:
+        return redirect('login')
+    
+    # Fetch entries from your Supabase table (replace 'journal' with your table name)
+    response = supabase.table('journals').select('*').eq('student_id', student['id']).execute()
+    entries = response.data if response.data else []
+
+    return render(request, 'students/journal_entries.html', {
+        'student': student,
+        'entries': entries
+    })
