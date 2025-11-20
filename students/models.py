@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractUser, Group, Permission
+from django.conf import settings
 from django.db import models
 
 class Student(AbstractUser):
@@ -25,3 +26,30 @@ class Student(AbstractUser):
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username"]  # still needed by Django but login uses email
+
+class Post(models.Model):
+    content = models.TextField()
+    is_anonymous = models.BooleanField(default=False)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+
+class Comment(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
+    content = models.TextField()
+    student_id = models.IntegerField()  # Supabase student ID
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+
+class Like(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='likes')
+    student_id = models.IntegerField()
+
+    class Meta:
+        unique_together = ('post', 'student_id')
