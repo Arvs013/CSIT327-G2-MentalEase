@@ -1,9 +1,8 @@
 // ===== Initialize after window loads to ensure Supabase is ready =====
-window.addEventListener('load', () => {
+window.addEventListener('load', function () {
     if (!window.supabase) {
-        console.error('Supabase not initialized! Make sure the supabase script runs before this file.');
-        return;
-    }
+    console.error('Supabase not initialized!');
+}
 
     const supabase = window.supabase;
     const CURRENT_STUDENT_ID = window.CURRENT_STUDENT_ID;
@@ -135,34 +134,38 @@ window.addEventListener('load', () => {
 
     // ===== Save Journal Entry =====
     saveJournalBtn.addEventListener('click', async () => {
-        const title = journalTitleInput?.value.trim() || 'New Entry';
-        const content = journalTextarea.value.trim();
+    const content = journalTextarea.value.trim();
+    if (!content) {
+        alert('Cannot save empty journal entry');
+        return;
+    }
 
-        if (!content) return alert('Cannot save empty journal entry');
+    const { data, error } = await supabase
+        .from('journals')
+        .insert([{
+            student_id: CURRENT_STUDENT_ID,
+            title: "Journal Reflection",  // default title
+            content: content,
+            created_at: new Date().toISOString()
+        }])
+        .select()
+        .single();
 
-        const { data, error } = await supabase
-            .from('journals')
-            .insert([{
-                student_id: CURRENT_STUDENT_ID,
-                title,
-                content,
-                created_at: new Date().toISOString()
-            }])
-            .select()
-            .single();
+    if (error) {
+        journalMessage.textContent = 'Failed to save entry: ' + error.message;
+        console.error(error);
+        return;
+    }
 
-        if (error) {
-            journalMessage.textContent = 'Failed to save entry: ' + error.message;
-            console.error(error);
-            return;
-        }
+    // Optional: show success message briefly
+    journalMessage.textContent = 'Reflection saved! Redirecting...';
+    journalTextarea.value = '';
 
-        journalEntries.unshift(data);
-        filterAndSort();
-        journalTitleInput.value = '';
-        journalTextarea.value = '';
-        journalMessage.textContent = 'Entry saved!';
-    });
+    // Redirect to journal entries page after 1 second
+    setTimeout(() => {
+        window.location.href = '/journal_entries/'; // adjust URL if needed
+    }, 1000);
+});
 
     // ===== Edit Journal Entry =====
     function openEditModal(id) {

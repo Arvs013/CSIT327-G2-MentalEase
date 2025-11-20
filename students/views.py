@@ -4,7 +4,12 @@ from django.contrib import messages
 from django.contrib.auth.hashers import make_password, check_password
 from .forms import StudentSignUpForm, StudentLoginForm
 from .supabase_client import supabase  # make sure you have supabase_client.py configured
+from django.db.models import Count
 from django.contrib.auth.decorators import login_required
+from .models import Post, Like, Comment, Student
+from .forms import PostForm 
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
 
 
 # 📝 Student Sign Up
@@ -104,3 +109,69 @@ def journal_entries(request):
         'student': student,
         'entries': entries
     })
+
+
+
+def feed_view(request):
+    student_session = request.session.get('student')
+    if not student_session:
+        messages.error(request, "Please login first.")
+        return redirect('login')
+
+    student_id = student_session['id']  
+
+    if request.method == 'POST':
+        form = PostForm(request.POST)
+        if form.is_valid():
+            Post.objects.create(
+                content=form.cleaned_data['content'],
+                is_anonymous=form.cleaned_data['is_anonymous'],
+                student_id=student_id
+            )
+            messages.success(request, "Post created!")
+            return redirect('feed')
+        else:
+            messages.error(request, "Post cannot be empty.")
+            return redirect('feed')
+
+    # GET request: show all posts
+    posts = Post.objects.all().order_by('-created_at')
+    return render(request, 'students/feed.html', {
+        'posts': posts,
+        'student': student_session,
+        'form': PostForm()
+    })
+
+    # GET request
+    posts = Post.objects.all().order_by('-created_at')
+    form = PostForm()
+    return render(request, 'students/feed.html', {
+        'posts': posts,
+        'student': student_session,
+        'form': form
+    })
+
+def toggle_like(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    like, created = Like.objects.get_or_create(post=post, student=request.user)
+    
+    if not created:
+        # If it already existed, delete it (unlike)
+        like.delete()
+    
+    # Redirect back to the feed page
+    return redirect('feed')
+
+
+def add_comment(request, post_id):
+    if request.method == 'POST':
+        post = get_object_or_404(Post, id=post_id)
+        content = request.POST.get('content', '').strip()
+        if content:
+            Comment.objects.create(
+                post=post,
+                student=request.user,
+                content=content
+            )
+    # Redirect back to the feed page
+    return redirect('feed')

@@ -1,0 +1,260 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Feed - MentalEase</title>
+    <link rel="stylesheet" href="{% static 'students/css/feed.css' %}">
+</head>
+<body>
+    <!-- Navigation Bar (Same as Dashboard) -->
+    <nav class="navbar">
+        <a href="{% url 'dashboard' %}" class="navbar-logo">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+            </svg>
+            <span>MentalEase</span>
+        </a>
+
+        <div class="navbar-links">
+            <a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a>
+            <a href="{% url 'about_us' %}" class="nav-link">About Us</a>
+            <a href="{% url 'feed' %}" class="nav-link active">Feed</a>
+        </div>
+        
+        <div class="profile-dropdown-container">
+            <div id="profilePic" class="profile-pic" title="Profile menu">
+                {{ student.username|slice:":1"|upper }}
+            </div>
+            <div id="profileDropdown" class="dropdown-menu">
+                <a href="{% url 'profile_page' %}" class="dropdown-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    My Profile
+                </a>
+                <div class="dropdown-item" id="openModalBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect width="20" height="16" x="2" y="4" rx="2"/>
+                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                    </svg>
+                    Change Email
+                </div>
+                <a href="{% url 'logout' %}" class="dropdown-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16 17 21 12 16 7"/>
+                        <line x1="21" x2="9" y1="12" y2="12"/>
+                    </svg>
+                    Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <div class="main-container">
+        <!-- Feed Section (Center) -->
+        <div class="feed-section">
+            <h1 class="page-title">Community Feed</h1>
+
+            <!-- Create Post Box -->
+            <div class="create-post-box">
+                <form method="POST" action="{% url 'feed' %}">
+                    {% csrf_token %}
+                    {{ form.content }}
+                    <div class="post-actions">
+                        <label class="anonymous-checkbox">
+                            {{ form.is_anonymous }} Post Anonymously
+                        </label>
+                        <button type="submit" class="post-btn">Post</button>
+                    </div>
+                </form>
+
+                <!-- Django messages -->
+                {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                            <p class="message">{{ message }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Recent Posts -->
+            <h2 class="section-title">Recent Posts</h2>
+            <div class="feed-list">
+                {% for post in posts %}
+                    <div class="post">
+                        <div class="post-header">
+                            <div class="post-author">
+                                <div class="author-avatar">
+                                    {% if post.is_anonymous %}
+                                        ?
+                                    {% else %}
+                                        {{ post.student.username|slice:":1"|upper }}
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <strong class="author-name">
+                                        {% if post.is_anonymous %}
+                                            Anonymous
+                                        {% else %}
+                                            {{ post.student.full_name }}
+                                        {% endif %}
+                                    </strong>
+                                    <small class="post-time">{{ post.created_at|date:"F d, Y P" }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="post-content">{{ post.content }}</p>
+                        
+                        <!-- Likes -->
+                        <div class="post-likes">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                            </svg>
+                            <span>{{ post.likes.count }}</span>
+                        </div>
+
+                        <!-- Comments Section -->
+                        <div class="comment-section">
+                            <h4 class="comments-title">Comments</h4>
+                            <div class="comments-list">
+                                {% for comment in post.comments.all %}
+                                    <div class="comment">
+                                        <div class="comment-avatar">
+                                            {{ comment.student.username|slice:":1"|upper }}
+                                        </div>
+                                        <div class="comment-content">
+                                            <strong>{{ comment.student.full_name }}</strong>
+                                            <p>{{ comment.content }}</p>
+                                        </div>
+                                    </div>
+                                {% empty %}
+                                    <p class="no-comments">No comments yet. Be the first to comment!</p>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Add Comment Form -->
+                            <div class="comment-box">
+                                <form method="POST" action="{% url 'add_comment' post_id=post.id %}" class="comment-form">
+                                    {% csrf_token %}
+                                    <input type="text" name="content" placeholder="Write a comment..." class="comment-input" required>
+                                    <button type="submit" class="comment-btn">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <line x1="22" x2="11" y1="2" y2="13"/>
+                                            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                                        </svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="no-posts">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                        <p>No posts yet. Be the first to share your thoughts!</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Sidebar (Right) -->
+        <aside class="sidebar">
+            <!-- Campus Hotlines -->
+            <div class="sidebar-card hotlines-card">
+                <h3 class="card-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                    </svg>
+                    Campus Hotlines
+                </h3>
+                <div class="hotline-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                    </svg>
+                    <div>
+                        <div class="hotline-label">CIT-U Wellness Center:</div>
+                        <a href="tel:123-4567" class="hotline-number">123-4567</a>
+                    </div>
+                </div>
+                <div class="hotline-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                    </svg>
+                    <div>
+                        <div class="hotline-label">Cebu Lifeline:</div>
+                        <a href="tel:988" class="hotline-number">988</a>
+                    </div>
+                </div>
+                <div class="hotline-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                    </svg>
+                    <div>
+                        <div class="hotline-label">National Mental Health Crisis Line:</div>
+                        <a href="tel:1553" class="hotline-number">1553</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wellness Guides -->
+            <div class="sidebar-card wellness-card">
+                <h3 class="card-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                    </svg>
+                    Wellness Guides & Articles
+                </h3>
+                <a href="https://www.who.int/health-topics/mental-health" target="_blank" class="wellness-link">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                        <polyline points="15 3 21 3 21 9"/>
+                        <line x1="10" x2="21" y1="14" y2="3"/>
+                    </svg>
+                    WHO: Mental Health Resources
+                </a>
+                <a href="https://www.psychologytoday.com" target="_blank" class="wellness-link">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                        <polyline points="15 3 21 3 21 9"/>
+                        <line x1="10" x2="21" y1="14" y2="3"/>
+                    </svg>
+                    Psychology Today
+                </a>
+                <a href="https://www.mind.org.uk" target="_blank" class="wellness-link">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                        <polyline points="15 3 21 3 21 9"/>
+                        <line x1="10" x2="21" y1="14" y2="3"/>
+                    </svg>
+                    Mind UK: Mental Health Support
+                </a>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        // Profile dropdown functionality
+        const profilePic = document.getElementById('profilePic');
+        const profileDropdown = document.getElementById('profileDropdown');
+
+        profilePic.addEventListener('click', (e) => {
+            e.stopPropagation();
+            profileDropdown.classList.toggle('show');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!profilePic.contains(e.target) && !profileDropdown.contains(e.target)) {
+                profileDropdown.classList.remove('show');
+            }
+        });
+    </script> 
+</body>
+</html>
