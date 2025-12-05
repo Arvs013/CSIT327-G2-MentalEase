@@ -30,7 +30,7 @@ class Student(AbstractUser):
 class Post(models.Model):
     content = models.TextField()
     is_anonymous = models.BooleanField(default=False)
-    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -39,8 +39,8 @@ class Post(models.Model):
 
 class Comment(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
     content = models.TextField()
-    student_id = models.IntegerField()  # Supabase student ID
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -49,7 +49,7 @@ class Comment(models.Model):
 
 class Like(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='likes')
-    student_id = models.IntegerField()
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, null=True, blank=True)
 
     class Meta:
-        unique_together = ('post', 'student_id')
+        unique_together = ('post', 'student')

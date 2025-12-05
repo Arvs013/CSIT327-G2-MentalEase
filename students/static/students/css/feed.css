@@ -590,3 +590,36 @@ body {
         width: 100%;
     }
 }
+
+/* Styles for the interaction bar */
+.post-interaction-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-top: 1px solid #eee;
+}
+
+.like-btn {
+    display: flex;
+    align-items: center;
+    color: #555;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.like-btn svg {
+    margin-right: 5px;
+    fill: transparent; /* Default to transparent fill */
+    transition: fill 0.2s;
+}
+
+/* When the 'liked' class is present, fill the heart with color */
+.like-btn.liked {
+    color: #e74c3c; /* Red color for text */
+}
+
+.like-btn.liked svg {
+    fill: #e74c3c; /* Red color for heart */
+    stroke: #e74c3c;
+}

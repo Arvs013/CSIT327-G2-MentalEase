@@ -14,4 +14,6 @@ urlpatterns = [
     path('feed/', views.feed_view, name='feed'),
     path('toggle-like/<int:post_id>/', views.toggle_like, name='toggle_like'),
     path('add-comment/<int:post_id>/', views.add_comment, name='add_comment'),
+    path('post/<int:post_id>/edit/', views.edit_post, name='edit_post'),
+    path('post/<int:post_id>/delete/', views.delete_post, name='delete_post'),
 ]

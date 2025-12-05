@@ -118,60 +118,141 @@ def feed_view(request):
         messages.error(request, "Please login first.")
         return redirect('login')
 
-    student_id = student_session['id']  
+    # map session -> local Django Student (get or create)
+    def get_or_create_local_student(sess):
+        email = sess.get('email')
+        username = sess.get('username') or (email.split('@')[0] if email else None)
+        full_name = sess.get('full_name') or username
+        if not email and not username:
+            return None
+        student_obj, created = Student.objects.get_or_create(
+            email=email,
+            defaults={'username': username, 'full_name': full_name}
+        )
+        return student_obj
+
+    local_student = get_or_create_local_student(student_session)
 
     if request.method == 'POST':
         form = PostForm(request.POST)
         if form.is_valid():
-            Post.objects.create(
-                content=form.cleaned_data['content'],
-                is_anonymous=form.cleaned_data['is_anonymous'],
-                student_id=student_id
-            )
+            new_post = form.save(commit=False)
+            # assign local Student instance (not supabase id)
+            new_post.student = local_student
+            # enforce anonymous if no local_student found
+            if local_student is None:
+                new_post.is_anonymous = True
+            new_post.save()
+
             messages.success(request, "Post created!")
             return redirect('feed')
         else:
             messages.error(request, "Post cannot be empty.")
-            return redirect('feed')
+    else:
+        form = PostForm()
 
-    # GET request: show all posts
-    posts = Post.objects.all().order_by('-created_at')
+    posts = Post.objects.select_related('student').annotate(
+        likes_count=Count('likes'),
+        comments_count=Count('comments')
+    ).order_by('-created_at')
+
+    liked_post_ids = Like.objects.filter(student_id=local_student.id if local_student else None).values_list('post_id', flat=True)
+
     return render(request, 'students/feed.html', {
         'posts': posts,
         'student': student_session,
-        'form': PostForm()
-    })
-
-    # GET request
-    posts = Post.objects.all().order_by('-created_at')
-    form = PostForm()
-    return render(request, 'students/feed.html', {
-        'posts': posts,
-        'student': student_session,
-        'form': form
+        'form': form,
+        'liked_post_ids': set(liked_post_ids),
     })
 
 def toggle_like(request, post_id):
+    student = request.session.get('student')
+    if not student:
+        return redirect('login')
+
+    student_id = student['id']
     post = get_object_or_404(Post, id=post_id)
-    like, created = Like.objects.get_or_create(post=post, student=request.user)
-    
-    if not created:
-        # If it already existed, delete it (unlike)
-        like.delete()
-    
-    # Redirect back to the feed page
+
+    like = Like.objects.filter(post=post, student_id=student_id).first()
+
+    if like:
+        like.delete()  # unlike
+    else:
+        Like.objects.create(post=post, student_id=student_id)
+
     return redirect('feed')
 
 
+
 def add_comment(request, post_id):
-    if request.method == 'POST':
-        post = get_object_or_404(Post, id=post_id)
-        content = request.POST.get('content', '').strip()
-        if content:
+    student = request.session.get('student')
+    if not student:
+        return redirect('login')
+
+    # ensure local Django Student
+    def get_local(sess):
+        email = sess.get('email')
+        username = sess.get('username') or (email.split('@')[0] if email else None)
+        full_name = sess.get('full_name') or username
+        if not email and not username:
+            return None
+        obj, _ = Student.objects.get_or_create(email=email, defaults={'username': username, 'full_name': full_name})
+        return obj
+
+    local_student = get_local(student)
+
+    if request.method == "POST":
+        content = request.POST.get("content", "").strip()
+        if content and local_student:
             Comment.objects.create(
-                post=post,
-                student=request.user,
-                content=content
+                post_id=post_id,
+                content=content,
+                student=local_student,
             )
-    # Redirect back to the feed page
+
+    return redirect('feed')
+
+def _get_session_student_id(request):
+    student = request.session.get('student')
+    return int(student.get('id')) if student and student.get('id') else None
+
+def edit_post(request, post_id):
+    # only allow POST (form from modal)
+    if request.method != 'POST':
+        return redirect('feed')
+
+    from .models import Post  # local import to avoid circular issues
+    post = get_object_or_404(Post, pk=post_id)
+
+    session_student_id = _get_session_student_id(request)
+    # allow only owner to edit
+    if not post.student or post.student.id != session_student_id:
+        messages.error(request, "You don't have permission to edit this post.")
+        return redirect('feed')
+
+    content = request.POST.get('content', '').strip()
+    if not content:
+        messages.error(request, "Post content cannot be empty.")
+        return redirect('feed')
+
+    post.content = content
+    post.save()
+    messages.success(request, "Post updated.")
+    return redirect('feed')
+
+
+def delete_post(request, post_id):
+    if request.method != 'POST':
+        return redirect('feed')
+
+    from .models import Post
+    post = get_object_or_404(Post, pk=post_id)
+
+    session_student_id = _get_session_student_id(request)
+    if not post.student or post.student.id != session_student_id:
+        messages.error(request, "You don't have permission to delete this post.")
+        return redirect('feed')
+
+    post.delete()
+    messages.success(request, "Post deleted.")
     return redirect('feed')
