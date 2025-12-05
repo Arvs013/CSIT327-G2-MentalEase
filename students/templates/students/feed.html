@@ -62,7 +62,8 @@
 
             <!-- Create Post Box -->
             <div class="create-post-box">
-                <form method="POST" action="{% url 'feed' %}">
+                <!-- Added ID for JS interaction -->
+                <form method="POST" action="{% url 'feed' %}" id="newPostForm">
                     {% csrf_token %}
                     {{ form.content }}
                     <div class="post-actions">
@@ -87,49 +88,85 @@
             <h2 class="section-title">Recent Posts</h2>
             <div class="feed-list">
                 {% for post in posts %}
-                    <div class="post">
+                    <div class="post" data-post-id="{{ post.id }}">
                         <div class="post-header">
                             <div class="post-author">
                                 <div class="author-avatar">
-                                    {% if post.is_anonymous %}
+                                    {% if post.is_anonymous or not post.student %}
                                         ?
                                     {% else %}
-                                        {{ post.student.username|slice:":1"|upper }}
+                                        {{ post.student.full_name|slice:":1"|upper }}
                                     {% endif %}
                                 </div>
                                 <div>
                                     <strong class="author-name">
-                                        {% if post.is_anonymous %}
+                                        {% if post.is_anonymous or not post.student %}
                                             Anonymous
                                         {% else %}
-                                            {{ post.student.full_name }}
+                                            {{ post.student.username }}
                                         {% endif %}
                                     </strong>
                                     <small class="post-time">{{ post.created_at|date:"F d, Y P" }}</small>
                                 </div>
                             </div>
+
+                            <!-- Edit/Delete controls (only show to post owner) -->
+                            {% if post.student and post.student.id == student.id %}
+                            <div class="post-controls">
+                                <!-- Edit button triggers modal -->
+                                <button type="button" class="btn btn-sm edit-post-btn" data-post-id="{{ post.id }}" data-post-content="{{ post.content|escapejs }}">Edit</button>
+
+                                <!-- Delete form -->
+                                <form method="post" action="{% url 'delete_post' post_id=post.id %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this post?')">Delete</button>
+                                </form>
+                            </div>
+                            {% endif %}
                         </div>
                         <p class="post-content">{{ post.content }}</p>
                         
-                        <!-- Likes -->
-                        <div class="post-likes">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-                            </svg>
-                            <span>{{ post.likes.count }}</span>
+                        <!-- Interaction Bar (Likes and Comments Summary) -->
+                        <div class="post-interaction-summary">
+                            <!-- Like Button Form (using the toggle_like URL) -->
+                            <a href="{% url 'toggle_like' post_id=post.id %}" class="like-btn {% if post.id in liked_post_ids %}liked{% endif %}">
+                                <svg width="18" height="18" viewBox="0 0 24 24" stroke-width="2">
+                                    <!-- Changed fill dynamically using CSS class "liked" -->
+                                    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                                </svg>
+                                <!-- Using the efficient 'likes_count' annotation from views.py -->
+                                <span>{{ post.likes_count }} Likes</span>
+                            </a>
+
+                            <!-- Comment Counter -->
+                            <span class="comment-count-display">
+                                {{ post.comments_count }} Comments
+                            </span>
                         </div>
+
 
                         <!-- Comments Section -->
                         <div class="comment-section">
                             <h4 class="comments-title">Comments</h4>
                             <div class="comments-list">
+                                <!-- Iterating over all related comments, efficiently fetched -->
                                 {% for comment in post.comments.all %}
                                     <div class="comment">
                                         <div class="comment-avatar">
-                                            {{ comment.student.username|slice:":1"|upper }}
+                                            {% if comment.student and comment.student.full_name %}
+                                                {{ comment.student.full_name|slice:":1"|upper }}
+                                            {% else %}
+                                                S
+                                            {% endif %}
                                         </div>
                                         <div class="comment-content">
-                                            <strong>{{ comment.student.full_name }}</strong>
+                                            <strong>
+                                                {% if comment.student and comment.student.username %}
+                                                    {{ comment.student.username }}
+                                                {% else %}
+                                                    Student
+                                                {% endif %}
+                                            </strong>
                                             <p>{{ comment.content }}</p>
                                         </div>
                                     </div>
@@ -240,6 +277,21 @@
         </aside>
     </div>
 
+    <!-- Edit Modal (single shared modal) -->
+<div id="editPostModal" class="modal" style="display:none;">
+    <div class="modal-inner">
+        <form id="editPostForm" method="post">
+            {% csrf_token %}
+            <h3>Edit Post</h3>
+            <textarea name="content" id="editPostContent" rows="6" required></textarea>
+            <div class="modal-actions">
+                <button type="button" id="closeEditModal">Cancel</button>
+                <button type="submit">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
     <script>
         // Profile dropdown functionality
         const profilePic = document.getElementById('profilePic');
@@ -255,6 +307,35 @@
                 profileDropdown.classList.remove('show');
             }
         });
+
+        document.addEventListener('DOMContentLoaded', function () {
+    const editBtns = document.querySelectorAll('.edit-post-btn');
+    const modal = document.getElementById('editPostModal');
+    const editForm = document.getElementById('editPostForm');
+    const editTextarea = document.getElementById('editPostContent');
+    const closeBtn = document.getElementById('closeEditModal');
+
+    editBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const postId = btn.dataset.postId;
+            const content = btn.dataset.postContent || '';
+            // set form action to the edit URL
+            editForm.action = `{% url 'edit_post' post_id=0 %}`.replace('/0/', '/' + postId + '/');
+            editTextarea.value = content;
+            modal.style.display = 'block';
+            editTextarea.focus();
+        });
+    });
+
+    closeBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+
+    // close modal on outside click
+    window.addEventListener('click', (e) => {
+        if (e.target === modal) modal.style.display = 'none';
+    });
+});
     </script> 
 </body>
 </html>
