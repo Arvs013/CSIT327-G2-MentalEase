@@ -16,4 +16,7 @@ urlpatterns = [
     path('add-comment/<int:post_id>/', views.add_comment, name='add_comment'),
     path('post/<int:post_id>/edit/', views.edit_post, name='edit_post'),
     path('post/<int:post_id>/delete/', views.delete_post, name='delete_post'),
+
+    #Resource URLs
+     path('resources/', views.resources_hub, name='resources_hub'),
 ]
