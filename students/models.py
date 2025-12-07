@@ -30,6 +30,7 @@ class Student(AbstractUser):
 class Post(models.Model):
     content = models.TextField()
     is_anonymous = models.BooleanField(default=False)
+    approved = models.BooleanField(default=False)  # new field for admin approval
     student = models.ForeignKey(Student, on_delete=models.CASCADE, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -53,3 +54,14 @@ class Like(models.Model):
 
     class Meta:
         unique_together = ('post', 'student')
+
+class Resource(models.Model):
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    category = models.CharField(max_length=100)
+    file = models.FileField(upload_to='resources/files/', blank=True, null=True)
+    image = models.ImageField(upload_to='resources/images/', blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title

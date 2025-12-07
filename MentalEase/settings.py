@@ -136,3 +136,6 @@ LOGIN_REDIRECT_URL = '/students/dashboard/'
 LOGOUT_REDIRECT_URL = '/students/login/'
 
 AUTH_USER_MODEL = "students.Student"
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'

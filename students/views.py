@@ -10,6 +10,7 @@ from .models import Post, Like, Comment, Student
 from .forms import PostForm 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
+from .models import Resource
 
 
 # 📝 Student Sign Up
@@ -166,19 +167,27 @@ def feed_view(request):
     })
 
 def toggle_like(request, post_id):
-    student = request.session.get('student')
-    if not student:
+    student_session = request.session.get('student')
+    if not student_session:
         return redirect('login')
 
-    student_id = student['id']
+    # Get local Django Student
+    local_student, _ = Student.objects.get_or_create(
+        email=student_session['email'],
+        defaults={
+            'username': student_session.get('username') or student_session['email'].split('@')[0],
+            'full_name': student_session.get('full_name') or student_session['username']
+        }
+    )
+
     post = get_object_or_404(Post, id=post_id)
 
-    like = Like.objects.filter(post=post, student_id=student_id).first()
+    like = Like.objects.filter(post=post, student=local_student).first()
 
     if like:
-        like.delete()  # unlike
+        like.delete()
     else:
-        Like.objects.create(post=post, student_id=student_id)
+        Like.objects.create(post=post, student=local_student)
 
     return redirect('feed')
 
@@ -256,3 +265,21 @@ def delete_post(request, post_id):
     post.delete()
     messages.success(request, "Post deleted.")
     return redirect('feed')
+
+def resources_hub(request):
+    query = request.GET.get('q', '').strip()
+    category = request.GET.get('category', '')
+
+    resources = Resource.objects.all()
+
+    if query:
+        resources = resources.filter(title__icontains=query)
+
+    if category:
+        resources = resources.filter(category__icontains=category)
+
+    return render(request, 'students/resources_hub.html', {
+        'resources': resources,
+        'query': query,
+        'category': category,
+    })
