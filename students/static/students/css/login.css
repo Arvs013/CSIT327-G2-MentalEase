@@ -38,16 +38,6 @@ body {
 @keyframes pulse2 { 0%,100%{transform:scale(1);opacity:.4;}50%{transform:scale(1.3);opacity:.5;} }
 @keyframes pulse3 { 0%,100%{transform:translate(-50%,-50%)scale(1);opacity:.3;}50%{transform:translate(-50%,-50%)scale(1.1);opacity:.5;} }
 
-/* Floating Circles */
-.floating-circle { position: absolute; border: 2px solid; border-radius: 50%; z-index: 1; }
-.circle-1 { top: 2.5rem; left: 2.5rem; width: 6rem; height: 6rem; border-color: rgba(147,197,253,0.3); animation: float1 15s ease-in-out infinite; }
-.circle-2 { bottom: 5rem; left: 5rem; width: 4rem; height: 4rem; border-color: rgba(196,181,253,0.3); animation: float2 12s ease-in-out infinite; }
-.circle-3 { top: 25%; right: 5rem; width: 5rem; height: 5rem; border-color: rgba(153,246,228,0.3); animation: float3 10s ease-in-out infinite; }
-
-@keyframes float1 { 0%,100%{transform:translateY(0)rotate(0);}50%{transform:translateY(-20px)rotate(180deg);} }
-@keyframes float2 { 0%,100%{transform:translateY(0)rotate(0);}50%{transform:translateY(15px)rotate(-180deg);} }
-@keyframes float3 { 0%,100%{transform:translate(0,0);}50%{transform:translate(10px,-10px);} }
-
 /* Form Container */
 .form-container { width: 100%; max-width: 28rem; position: relative; z-index: 10; animation: fadeInUp 0.6s ease-out; }
 @keyframes fadeInUp { from{opacity:0;transform:translateY(20px);} to{opacity:1;transform:translateY(0);} }
