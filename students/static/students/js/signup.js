@@ -27,16 +27,5 @@ passwordInput.addEventListener("input", () => {
     strengthText.textContent = text;
 });
 
-form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const username = form.username.value.trim();
-    const fullName = form.fullName.value.trim();
-    const email = form.email.value.trim();
-
-    if (username && fullName && email && passwordInput.value) {
-        document.getElementById("successMessage").style.display = "flex";
-        document.getElementById("successText").textContent = `Welcome, ${fullName}! Your account was created successfully.`;
-        form.reset();
-        passwordStrength.style.display = "none";
-    }
-});
+// Form submission is handled by Django backend
+// No need to prevent default - let the form submit normally

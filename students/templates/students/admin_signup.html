@@ -1,0 +1,153 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Registration - MentalEase</title>
+    <link rel="stylesheet" href="{% static 'students/css/signup.css' %}">
+</head>
+<body>
+    <div class="page-container">
+        <div class="gradient-background"></div>
+        <div class="mental-health-cover"></div>
+        
+        <div class="form-container">
+            <div class="form-card">
+                <div class="shimmer-effect"></div>
+
+                <div class="messages" id="messagesContainer">
+                    {% for message in messages %}
+                    <p class="message-item {{ message.tags }} {% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% elif message.tags == 'info' %}info{% else %}warning{% endif %}">
+                        <svg class="message-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            {% if message.tags == 'success' %}
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                            <polyline points="22 4 12 14.01 9 11.01" />
+                            {% elif message.tags == 'error' %}
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" x2="12" y1="8" y2="12" />
+                            <line x1="12" x2="12.01" y1="16" y2="16" />
+                            {% elif message.tags == 'info' %}
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" x2="12" y1="16" y2="16" />
+                            <line x1="12" x2="12" y1="8" y2="12" />
+                            {% else %}
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                            <line x1="12" x2="12" y1="9" y2="13" />
+                            <line x1="12" x2="12.01" y1="17" y2="17" />
+                            {% endif %}
+                        </svg>
+                        {{ message }}
+                    </p>
+                    {% endfor %}
+                </div>
+
+                <div class="header">
+                    <div class="icon-wrapper">
+                        <svg class="heart-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        </svg>
+                    </div>
+                    <h2>Admin Registration</h2>
+                    <p class="subtitle">Create an administrator account</p>
+                </div>
+
+                <form method="POST" class="signup-form">
+                    {% csrf_token %}
+                    
+                    <div class="form-field">
+                        <label for="id_username" class="field-label">Username</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="id_username" name="username" placeholder="Choose a unique username" class="form-input" required>
+                        </div>
+                        {% if form.username.errors %}
+                            <div style="color: #dc2626; font-size: 0.875rem; margin-top: 0.25rem;">{{ form.username.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-field">
+                        <label for="id_full_name" class="field-label">Full Name</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="id_full_name" name="full_name" placeholder="Enter your full name" class="form-input" required>
+                        </div>
+                        {% if form.full_name.errors %}
+                            <div style="color: #dc2626; font-size: 0.875rem; margin-top: 0.25rem;">{{ form.full_name.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-field">
+                        <label for="id_email" class="field-label">Email</label>
+                        <div class="input-wrapper">
+                            <input type="email" id="id_email" name="email" placeholder="your.email@example.com" class="form-input" required>
+                        </div>
+                        {% if form.email.errors %}
+                            <div style="color: #dc2626; font-size: 0.875rem; margin-top: 0.25rem;">{{ form.email.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-field">
+                        <label for="id_password" class="field-label">Password</label>
+                        <div class="input-wrapper">
+                            <input type="password" id="id_password" name="password" placeholder="Create a strong password" class="form-input" required>
+                        </div>
+                        {% if form.password.errors %}
+                            <div style="color: #dc2626; font-size: 0.875rem; margin-top: 0.25rem;">{{ form.password.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-field">
+                        <label for="id_confirm_password" class="field-label">Confirm Password</label>
+                        <div class="input-wrapper">
+                            <input type="password" id="id_confirm_password" name="confirm_password" placeholder="Re-enter your password" class="form-input" required>
+                        </div>
+                        {% if form.confirm_password.errors %}
+                            <div style="color: #dc2626; font-size: 0.875rem; margin-top: 0.25rem;">{{ form.confirm_password.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <button type="submit" class="submit-button">Register as Admin</button>
+                </form>
+
+                <p class="login-link">
+                    Already have an account?
+                    <a href="{% url 'login' %}" class="link">Log in here</a>
+                </p>
+                <p class="login-link" style="margin-top: 0.5rem;">
+                    <a href="{% url 'signup' %}" class="link">Register as regular user</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'students/js/signup.js' %}"></script>
+    <script>
+        // Auto-fade messages after 4 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            const messagesContainer = document.getElementById('messagesContainer');
+            if (messagesContainer) {
+                const messageItems = messagesContainer.querySelectorAll('.message-item');
+                
+                messageItems.forEach(function(message) {
+                    // Set timeout to fade out after 4 seconds
+                    setTimeout(function() {
+                        message.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
+                        message.style.opacity = '0';
+                        message.style.transform = 'translateY(-10px)';
+                        
+                        // Remove from DOM after fade animation completes
+                        setTimeout(function() {
+                            message.remove();
+                            
+                            // Remove messages container if empty
+                            if (messagesContainer && messagesContainer.children.length === 0) {
+                                messagesContainer.style.display = 'none';
+                            }
+                        }, 500); // Wait for fade animation to complete
+                    }, 4000); // 4 seconds
+                });
+            }
+        });
+    </script>
+</body>
+</html>
+
