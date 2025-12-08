@@ -1,0 +1,281 @@
+{% extends is_admin_flag|yesno:"students/base_admin.html,students/base_user.html" %}
+{% load static %}
+
+{% block title %}Feed - MentalEase{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'students/css/dashboard.css' %}">
+<style>
+    .privacy-toggle input:checked + .privacy-slider {
+        background-color: #9333ea !important;
+    }
+    
+    .privacy-toggle input:checked + .privacy-slider .privacy-slider-button {
+        transform: translateX(24px) !important;
+    }
+    
+    .privacy-toggle input:not(:checked) + .privacy-slider {
+        background-color: #9ca3af !important;
+    }
+    
+    .privacy-toggle input:not(:checked) + .privacy-slider .privacy-slider-button {
+        transform: translateX(0) !important;
+    }
+    
+    .privacy-toggle {
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+    }
+    
+    .privacy-toggle input {
+        margin: 0;
+        padding: 0;
+    }
+    
+    .privacy-toggle input:focus + .privacy-slider {
+        box-shadow: 0 0 1px #9333ea;
+    }
+    
+    .privacy-slider {
+        display: flex;
+        align-items: center;
+    }
+    
+    /* Improved Post Card Styling */
+    .post-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 0.875rem;
+        padding: 1.5rem;
+        background: #ffffff;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        transition: all 0.2s ease;
+        margin-bottom: 1.5rem;
+    }
+    
+    .post-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border-color: #d1d5db;
+        transform: translateY(-2px);
+    }
+    
+    .post-card-header {
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f3f4f6;
+    }
+    
+    .post-card-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .post-author-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .post-author-avatar {
+        flex-shrink: 0;
+    }
+    
+    .author-avatar-circle {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #9333ea 0%, #3b82f6 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+    
+    .post-author-details {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .post-author-name-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .post-author-name {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #1f2937;
+    }
+    
+    .post-anonymous-badge {
+        padding: 0.35rem 0.75rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+    
+    .post-public-badge {
+        padding: 0.35rem 0.75rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .post-timestamp {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        color: #6b7280;
+        font-size: 0.875rem;
+    }
+    
+    .post-timestamp svg {
+        width: 14px;
+        height: 14px;
+        color: #9ca3af;
+    }
+    
+    .post-metadata {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        padding-top: 0.75rem;
+        border-top: 1px solid #f3f4f6;
+    }
+    
+    .post-metadata-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        color: #6b7280;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .post-metadata-item svg {
+        width: 12px;
+        height: 12px;
+        color: #9ca3af;
+    }
+    
+    .post-card-content {
+        margin: 1.25rem 0;
+    }
+    
+    .post-content-text {
+        white-space: pre-wrap;
+        color: #1f2937;
+        font-size: 0.95rem;
+        line-height: 1.7;
+        margin: 0;
+        padding: 1rem;
+        background: #f9fafb;
+        border-radius: 0.5rem;
+        border-left: 4px solid #9333ea;
+    }
+    
+    .post-card-actions {
+        display: flex;
+        gap: 1.5rem;
+        align-items: center;
+        padding-top: 1rem;
+        border-top: 1px solid #e5e7eb;
+    }
+    
+    .post-like-btn,
+    .post-comment-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #6b7280;
+        font-size: 0.9rem;
+        font-weight: 600;
+        transition: all 0.2s;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.5rem;
+    }
+    
+    .post-like-btn:hover,
+    .post-comment-btn:hover {
+        background: #f3f4f6;
+        color: #9333ea;
+    }
+    
+    .post-like-btn svg,
+    .post-comment-btn svg {
+        width: 18px;
+        height: 18px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="gradient-background"></div>
+<div class="mental-health-cover"></div>
+
+<div class="page-container">
+    <div class="form-container">
+        <div class="form-card">
+            <header class="header">
+                <h1>Community Support</h1>
+                <p class="subtitle">Share your thoughts anonymously and support others</p>
+            </header>
+
+            <div class="card" style="margin-bottom: 2rem; position: relative; overflow: hidden;">
+                <div style="margin-bottom: 1rem;">
+                    <h3 style="margin: 0;">Create Post</h3>
+                </div>
+                <div id="postFormContainer">
+                    <textarea id="postContent" placeholder="Share your thoughts..." style="width: 100%; min-height: 120px; padding: 1rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; font-family: inherit; font-size: 0.95rem; resize: vertical;"></textarea>
+                    
+                    <!-- Anonymous Toggle (Facebook-style) -->
+                    <div style="margin-top: 1rem; padding: 0.75rem; background: #f9fafb; border-radius: 0.5rem; border: 1px solid #e5e7eb;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                                <span id="privacyLabel" style="font-size: 0.875rem; color: #374151; font-weight: 500;"><span id="privacyValue" style="color: #9333ea;">Post anonymously</span></span>
+                            </div>
+                            <label class="privacy-toggle" style="position: relative; display: inline-block; width: 50px; height: 26px; cursor: pointer; margin: 0;">
+                                <input type="checkbox" id="isAnonymous" checked style="opacity: 0; width: 0; height: 0; position: absolute; margin: 0; padding: 0;">
+                                <span class="privacy-slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #9333ea; transition: 0.3s; border-radius: 26px;">
+                                    <span class="privacy-slider-button" style="position: absolute; content: ''; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: 0.3s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transform: translateX(24px);"></span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <button id="submitPostBtn" style="margin-top: 1rem; padding: 0.75rem 1.5rem; background: #9333ea; color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; width: 100%;">Submit Post</button>
+                    <div id="postMessage" style="display: none; margin-top: 1rem; padding: 0.75rem; border-radius: 0.5rem;"></div>
+                </div>
+            </div>
+
+            <div id="postsContainer">
+                <div style="text-align: center; padding: 2rem; color: #6b7280;">Loading posts...</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'students/js/community.js' %}"></script>
+<script src="{% static 'students/js/dashboard.js' %}"></script>
+{% endblock %}

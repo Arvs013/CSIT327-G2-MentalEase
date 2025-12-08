@@ -1,0 +1,569 @@
+{% extends 'students/base_admin.html' %}
+{% load static %}
+
+{% block title %}Admin Dashboard - MentalEase{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'students/css/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'students/css/admin_posts.css' %}">
+<style>
+    .tab-chip { 
+        padding: 0.6rem 1rem; 
+        border-radius: 999px; 
+        border: 1px solid #e5e7eb; 
+        background: #f9fafb; 
+        color: #6b7280; 
+        font-weight: 600; 
+        cursor: pointer; 
+        transition: all 0.2s; 
+    }
+    .tab-chip.active { 
+        background: linear-gradient(135deg, #9333ea 0%, #3b82f6 100%); 
+        color: #fff; 
+        border-color: transparent; 
+        box-shadow: 0 4px 10px -4px rgba(147,51,234,0.35); 
+    }
+    .tab-chip:hover:not(.active) {
+        background: #f3f4f6;
+        border-color: #d1d5db;
+    }
+    .admin-section { 
+        margin-top: 1.25rem; 
+        padding: 1.5rem; 
+        background: #fff; 
+        border-radius: 0.75rem; 
+        box-shadow: 0 1px 4px rgba(0,0,0,0.05); 
+    }
+    .section-header { 
+        display: flex; 
+        align-items: center; 
+        justify-content: space-between; 
+        gap: 0.75rem; 
+        flex-wrap: wrap; 
+        margin-bottom: 1rem;
+    }
+    .pill-btn { 
+        padding: 0.6rem 1rem; 
+        border-radius: 0.65rem; 
+        background: #9333ea; 
+        color: #fff; 
+        border: none; 
+        font-weight: 700; 
+        cursor: pointer; 
+        transition: all 0.2s;
+    }
+    .pill-btn:hover {
+        background: #7e22ce;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(147, 51, 234, 0.3);
+    }
+    .pill-input { 
+        padding: 0.55rem 0.85rem; 
+        border-radius: 0.65rem; 
+        border: 1px solid #e5e7eb; 
+        min-width: 240px; 
+    }
+    .admin-list { 
+        margin-top: 0.75rem; 
+        display: flex; 
+        flex-direction: column; 
+        gap: 1rem; 
+    }
+    .moderation-card { 
+        border: 1px solid #e5e7eb; 
+        border-radius: 0.875rem; 
+        padding: 1.5rem; 
+        background: #ffffff; 
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        transition: all 0.2s ease;
+    }
+    .moderation-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border-color: #d1d5db;
+        transform: translateY(-2px);
+    }
+    .moderation-card-header {
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f3f4f6;
+    }
+    .moderation-card-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    .meta-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    .submitter-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    .submitter-badge {
+        background: linear-gradient(135deg, #9333ea 0%, #3b82f6 100%);
+        color: white;
+        padding: 0.5rem 0.875rem;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    .submitter-badge svg {
+        width: 14px;
+        height: 14px;
+    }
+    .visibility-badge {
+        padding: 0.5rem 0.875rem;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    .timestamp-info {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        color: #6b7280;
+        font-size: 0.875rem;
+    }
+    .timestamp-info svg {
+        width: 14px;
+        height: 14px;
+        color: #9ca3af;
+    }
+    .timestamp-text {
+        font-weight: 600;
+        color: #374151;
+    }
+    .post-metadata {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    .metadata-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        color: #6b7280;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    .metadata-item svg {
+        width: 12px;
+        height: 12px;
+        color: #9ca3af;
+    }
+    .moderation-card-content {
+        margin: 1.25rem 0;
+    }
+    .post-content {
+        white-space: pre-wrap;
+        color: #1f2937;
+        font-size: 0.95rem;
+        line-height: 1.7;
+        margin: 0;
+        padding: 1rem;
+        background: #f9fafb;
+        border-radius: 0.5rem;
+        border-left: 4px solid #9333ea;
+    }
+    .moderation-actions { 
+        display: flex; 
+        gap: 0.75rem; 
+        flex-wrap: wrap; 
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e5e7eb;
+    }
+    .approve-btn { 
+        background: #10b981; 
+        color: white; 
+        border: none; 
+        padding: 0.65rem 1.25rem; 
+        border-radius: 0.5rem; 
+        font-weight: 600; 
+        cursor: pointer; 
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s;
+    }
+    .approve-btn:hover {
+        background: #059669;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+    }
+    .decline-btn { 
+        background: #dc2626; 
+        color: white; 
+        border: none; 
+        padding: 0.65rem 1.25rem; 
+        border-radius: 0.5rem; 
+        font-weight: 600; 
+        cursor: pointer; 
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s;
+    }
+    .decline-btn:hover {
+        background: #b91c1c;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3);
+    }
+    .revert-btn { 
+        background: #6366f1; 
+        color: white; 
+        border: none; 
+        padding: 0.65rem 1.25rem; 
+        border-radius: 0.5rem; 
+        font-weight: 600; 
+        cursor: pointer; 
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s;
+    }
+    .revert-btn:hover {
+        background: #4f46e5;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(99, 102, 241, 0.3);
+    }
+    .ghost-pill { 
+        background: #eef2ff; 
+        color: #4338ca; 
+        padding: 0.35rem 0.65rem; 
+        border-radius: 999px; 
+        font-size: 0.8rem; 
+        font-weight: 700; 
+        display: inline-block; 
+    }
+    .empty-state { 
+        text-align: center; 
+        color: #6b7280; 
+        padding: 2rem 1.5rem; 
+        font-size: 0.9375rem;
+    }
+    /* User Management Styling */
+    .user-management-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        background: #f9fafb;
+        border-radius: 0.75rem;
+        margin-bottom: 1rem;
+        border: 1px solid #e5e7eb;
+    }
+    .select-all-container {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .bulk-actions-container {
+        display: flex;
+        gap: 0.5rem;
+    }
+    .bulk-delete-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.65rem 1.25rem;
+        background: #dc2626;
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .bulk-delete-btn:hover:not(:disabled) {
+        background: #b91c1c;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3);
+    }
+    .bulk-delete-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    .user-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 0.875rem;
+        padding: 1.5rem;
+        background: #ffffff;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        transition: all 0.2s ease;
+        margin-bottom: 1rem;
+    }
+    .user-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border-color: #d1d5db;
+        transform: translateY(-2px);
+    }
+    .user-card-header {
+        margin-bottom: 1rem;
+    }
+    .user-card-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .user-main-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .user-identity {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex: 1;
+    }
+    .user-avatar {
+        position: relative;
+        width: 48px;
+        height: 48px;
+    }
+    .user-avatar img {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+    .user-details {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    .user-name-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    .username-text {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #1f2937;
+    }
+    .user-full-name {
+        font-size: 0.875rem;
+        color: #6b7280;
+    }
+    .account-badge {
+        padding: 0.35rem 0.75rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        display: inline-block;
+    }
+    .admin-badge {
+        background: linear-gradient(135deg, #9333ea 0%, #3b82f6 100%);
+        color: white;
+    }
+    .user-badge {
+        background: #f3f4f6;
+        color: #374151;
+    }
+    .user-metadata {
+        display: flex;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+        padding-top: 0.75rem;
+        border-top: 1px solid #f3f4f6;
+    }
+    .user-metadata .metadata-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        color: #6b7280;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    .user-metadata .metadata-item svg {
+        width: 14px;
+        height: 14px;
+        color: #9ca3af;
+    }
+    .email-link {
+        color: #6366f1;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+    .email-link:hover {
+        color: #4f46e5;
+        text-decoration: underline;
+    }
+    .user-card-actions {
+        display: flex;
+        justify-content: flex-end;
+        padding-top: 1rem;
+        border-top: 1px solid #e5e7eb;
+    }
+    .user-delete-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.65rem 1.25rem;
+        background: #dc2626;
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .user-delete-btn:hover {
+        background: #b91c1c;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3);
+    }
+    .self-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.5rem 1rem;
+        background: #f3f4f6;
+        color: #6b7280;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+    .self-indicator svg {
+        width: 14px;
+        height: 14px;
+    }
+    .user-row { 
+        display: grid; 
+        grid-template-columns: 1.5fr 1.5fr 2fr 1fr 0.8fr; 
+        gap: 0.5rem; 
+        align-items: center; 
+        padding: 0.75rem; 
+        border-bottom: 1px solid #e5e7eb; 
+    }
+    .user-row.header { 
+        font-weight: 700; 
+        color: #374151; 
+        background: #f9fafb; 
+        border-radius: 0.5rem; 
+    }
+    .link-muted { 
+        color: #6b7280; 
+        text-decoration: none; 
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="gradient-background"></div>
+<div class="mental-health-cover"></div>
+
+<div class="page-container">
+    <div class="form-container">
+        <div class="form-card">
+            <header class="header">
+                <h1>Admin Dashboard</h1>
+                <p class="subtitle">Moderate community posts and manage users</p>
+            </header>
+
+            <!-- Quick stats -->
+            <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                <div class="stat-card" style="background: linear-gradient(135deg, #9333ea 0%, #3b82f6 100%); color: white; padding: 1.25rem; border-radius: 0.75rem; text-align: center;">
+                    <div id="pendingCount" style="font-size: 2rem; font-weight: 700;">{{ stats.pending_count|default:0 }}</div>
+                    <div style="font-size: 0.875rem; opacity: 0.9;">Pending Posts</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 1.25rem; border-radius: 0.75rem; text-align: center;">
+                    <div id="totalPostsCount" style="font-size: 2rem; font-weight: 700;">{{ stats.post_count|default:0 }}</div>
+                    <div style="font-size: 0.875rem; opacity: 0.9;">Total Posts</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; padding: 1.25rem; border-radius: 0.75rem; text-align: center;">
+                    <div id="totalUsersCount" style="font-size: 2rem; font-weight: 700;">{{ stats.user_count|default:0 }}</div>
+                    <div style="font-size: 0.875rem; opacity: 0.9;">Total Users</div>
+                </div>
+            </div>
+
+            <!-- Section tabs -->
+            <div style="display: flex; gap: 0.5rem; overflow-x: auto; padding: 0.25rem 0 0.75rem;">
+                <button class="tab-chip active" data-target="pendingSection">Pending Posts</button>
+                <button class="tab-chip" data-target="approvedSection">Approved Posts</button>
+                <button class="tab-chip" data-target="declinedSection">Declined Posts</button>
+                <button class="tab-chip" data-target="usersSection">User Management</button>
+            </div>
+
+            <!-- Pending Posts -->
+            <section id="pendingSection" class="admin-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Pending Posts</h2>
+                        <p class="subtitle">Review and approve/decline new submissions</p>
+                    </div>
+                    <button class="pill-btn" id="refreshPending">Refresh</button>
+                    </div>
+                <div id="pendingPostsContainer" class="admin-list">
+                    <div class="empty-state">Loading pending posts...</div>
+            </div>
+            </section>
+
+            <!-- Approved Posts -->
+            <section id="approvedSection" class="admin-section" style="display:none;">
+                <div class="section-header">
+                    <div>
+                        <h2>Approved Posts</h2>
+                        <p class="subtitle">Posts visible to the community</p>
+                    </div>
+                    <button class="pill-btn" id="refreshApproved">Refresh</button>
+                </div>
+                <div id="approvedPostsContainer" class="admin-list">
+                    <div class="empty-state">Loading approved posts...</div>
+                </div>
+            </section>
+
+            <!-- Declined Posts -->
+            <section id="declinedSection" class="admin-section" style="display:none;">
+                <div class="section-header">
+                    <div>
+                        <h2>Declined Posts</h2>
+                        <p class="subtitle">Archive of declined submissions</p>
+                    </div>
+                    <button class="pill-btn" id="refreshDeclined">Refresh</button>
+                </div>
+                <div id="declinedPostsContainer" class="admin-list">
+                    <div class="empty-state">Loading declined posts...</div>
+                </div>
+            </section>
+
+            <!-- User Management -->
+            <section id="usersSection" class="admin-section" style="display:none;">
+                <div class="section-header">
+                    <div>
+                        <h2>User Management</h2>
+                        <p class="subtitle">Review all users and remove accounts when necessary</p>
+            </div>
+                    <div style="display:flex; gap:0.5rem; align-items:center;">
+                        <input type="text" id="userSearchInput" placeholder="Search by username or email" class="pill-input">
+                        <button class="pill-btn" id="refreshUsers">Search</button>
+        </div>
+    </div>
+                <div id="usersTableContainer" class="admin-list" data-current-user-id="{{ student.id|default:'' }}">
+                    <div class="empty-state">Loading users...</div>
+</div>
+            </section>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'students/js/admin_dashboard.js' %}"></script>
+{% endblock %}

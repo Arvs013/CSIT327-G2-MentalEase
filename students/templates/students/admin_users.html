@@ -1,0 +1,82 @@
+{% extends 'students/base_admin.html' %}
+{% load static %}
+
+{% block title %}Manage Users - MentalEase Admin{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'students/css/dashboard.css' %}">
+<style>
+    .pill-input { padding: 0.55rem 0.85rem; border-radius: 0.65rem; border: 1px solid #e5e7eb; min-width: 260px; }
+    .pill-btn { padding: 0.6rem 1rem; border-radius: 0.65rem; background: #9333ea; color: #fff; border: none; font-weight: 700; cursor: pointer; }
+    .admin-section { margin-top: 1.25rem; padding: 1rem; background: #fff; border-radius: 0.75rem; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+    .user-table { width: 100%; border-collapse: collapse; }
+    .user-table th, .user-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #e5e7eb; }
+    .user-table th { background: #f9fafb; font-weight: 700; color: #374151; }
+    .user-row-actions { display: flex; gap: 0.5rem; }
+    .delete-btn { background: #dc2626; color: #fff; border: none; padding: 0.45rem 0.75rem; border-radius: 0.5rem; cursor: pointer; font-weight: 600; }
+    .delete-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .status-chip { padding: 0.35rem 0.65rem; border-radius: 999px; font-weight: 700; font-size: 0.8rem; }
+    .status-admin { background: #eef2ff; color: #4338ca; }
+    .status-user { background: #f3f4f6; color: #374151; }
+    .subtle-text { color: #6b7280; font-size: 0.9rem; }
+    .bulk-bar { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.75rem; }
+    .empty-state { text-align: center; color: #6b7280; padding: 1.5rem; }
+    .loading-state { text-align: center; padding: 1.5rem; color: #6b7280; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="gradient-background"></div>
+<div class="mental-health-cover"></div>
+
+<div class="page-container">
+    <div class="form-container">
+        <div class="form-card">
+            <header class="header">
+                <h1>Manage Users</h1>
+                <p class="subtitle">Search, review, and manage all accounts</p>
+            </header>
+
+            <div class="admin-section">
+                <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+                    <input type="text" id="userSearchInput" class="pill-input" placeholder="Search by username or email">
+                    <button class="pill-btn" id="refreshUsersBtn">Search</button>
+                </div>
+
+                <div class="bulk-bar">
+                    <label class="subtle-text">Bulk actions:</label>
+                    <select name="action" id="bulkAction">
+                        <option value="">-- select --</option>
+                        <option value="delete">Delete selected users</option>
+                    </select>
+                    <button class="pill-btn" id="actionGoBtn">Go</button>
+                    <span id="selectedCount" class="subtle-text">0 of <span id="totalCount">0</span> selected</span>
+                </div>
+            </div>
+
+            <section class="admin-section" style="margin-top:0.75rem;">
+                <div id="adminUsersContainer" data-current-user-id="{{ student.id|default:'' }}">
+                    <div class="loading-state">Loading users...</div>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Delete Modal -->
+<div id="deleteModal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 2000; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 2rem; border-radius: 0.75rem; max-width: 420px; width: 90%;">
+        <h3 style="margin-bottom: 0.75rem;">Confirm Deletion</h3>
+        <p id="deleteModalText" style="margin-bottom: 1.25rem; color: #6b7280;">Delete selected users? This will also delete their posts.</p>
+        <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+            <button id="cancelDelete" style="padding: 0.75rem 1.5rem; background: #e5e7eb; border: none; border-radius: 0.5rem; cursor: pointer; font-weight: 600;">Cancel</button>
+            <button id="confirmDelete" style="padding: 0.75rem 1.5rem; background: #dc2626; color: white; border: none; border-radius: 0.5rem; cursor: pointer; font-weight: 600;">Delete</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'students/js/admin.js' %}"></script>
+{% endblock %}
+
