@@ -1,0 +1,104 @@
+{% extends is_admin_flag|yesno:"students/base_admin.html,students/base_user.html" %}
+{% load static %}
+
+{% block title %}Edit Profile - MentalEase{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'students/css/profile_edit.css' %}">
+{% endblock %}
+
+{% block content %}
+
+    <div class="page-container">
+        <div class="gradient-background"></div>
+        <div class="mental-health-cover"></div>
+        
+        <div class="form-container">
+            <div class="form-card">
+                <header class="header">
+                    <h1>Edit Profile</h1>
+                    <p class="subtitle">Update your personal information</p>
+                </header>
+
+                <form id="profileForm" method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <!-- Profile Picture Section -->
+                    <div class="profile-picture-section">
+                        <div class="avatar-container">
+                            {% if profile and profile.profile_picture_url %}
+                                <img id="profilePreview" src="{{ profile.profile_picture_url }}" alt="Profile Picture" class="avatar-image">
+                            {% else %}
+                                <div id="profilePreview" class="avatar-placeholder">{{ student.username|first|upper }}</div>
+                            {% endif %}
+                            <label for="id_profile_picture" class="upload-label">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                                Upload Photo
+                            </label>
+                            <input type="file" id="id_profile_picture" name="profile_picture" accept="image/*" class="file-input">
+                        </div>
+                    </div>
+
+                    <!-- Form Fields with Floating Labels -->
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <input type="text" id="id_username" name="username" value="{{ profile.username|default:student.username }}" class="form-input" placeholder=" " required>
+                            <label for="id_username" class="form-label">Username</label>
+                            <span class="form-help">Your unique username (required)</span>
+                        </div>
+
+                        <div class="form-group">
+                            <input type="text" id="id_full_name" name="full_name" value="{{ profile.full_name|default:'' }}" class="form-input" placeholder=" ">
+                            <label for="id_full_name" class="form-label">Full Name</label>
+                            <span class="form-help">Your display name</span>
+                        </div>
+
+                        <div class="form-group">
+                            <input type="email" id="id_email" name="email" value="{{ profile.email|default:student.email }}" class="form-input" placeholder=" " required>
+                            <label for="id_email" class="form-label">Email</label>
+                            <span class="form-help">Your email address (required)</span>
+                        </div>
+
+                        <div class="form-group">
+                            <input type="text" id="id_bio" name="bio" value="{{ profile.bio|default:'' }}" class="form-input" placeholder=" " maxlength="500">
+                            <label for="id_bio" class="form-label">Bio</label>
+                            <span class="form-help">Tell us about yourself (max 500 characters)</span>
+                        </div>
+
+                        <div class="form-group">
+                            <input type="tel" id="id_phone" name="phone" value="{{ profile.phone|default:'' }}" class="form-input" placeholder=" ">
+                            <label for="id_phone" class="form-label">Phone Number</label>
+                        </div>
+
+                        <div class="form-group">
+                            <input type="text" id="id_location" name="location" value="{{ profile.location|default:'' }}" class="form-input" placeholder=" ">
+                            <label for="id_location" class="form-label">Location</label>
+                        </div>
+
+                        <div class="form-group">
+                            <input type="date" id="id_date_of_birth" name="date_of_birth" value="{{ profile.date_of_birth|default:'' }}" class="form-input" placeholder=" ">
+                            <label for="id_date_of_birth" class="form-label">Date of Birth</label>
+                        </div>
+                    </div>
+
+                    <div id="profileMessage" class="message" style="display: none;"></div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary" id="saveBtn">Save Changes</button>
+                        <a href="{% url 'profile_page' %}" class="btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'students/js/profile_edit.js' %}"></script>
+{% endblock %}
+

@@ -7,19 +7,23 @@ body {
 }
 
 /* Page Container & Background */
+.main-content {
+    padding-top: 0;
+}
+
 .page-container {
-    min-height: 100vh;
-    padding-top: 5rem;
+    min-height: calc(100vh - 80px);
+    padding-top: 2rem;
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    padding: 6rem 1rem 2rem;
+    padding: 2rem 1rem;
     position: relative;
     overflow: hidden;
 }
 
 .gradient-background {
-    position: absolute;
+    position: fixed;
     inset: 0;
     background: linear-gradient(135deg, #eff6ff 0%, #f5f3ff 50%, #f0fdfa 100%);
     background-size: 200% 200%;
@@ -27,6 +31,19 @@ body {
     z-index: 0;
 }
 @keyframes gradientShift { 0%,100%{background-position:0% 50%;} 50%{background-position:100% 50%;} }
+
+/* Mental Health Background Cover */
+.mental-health-cover {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    background: 
+        radial-gradient(circle at 20% 30%, rgba(147, 197, 253, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(196, 181, 253, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(153, 246, 228, 0.1) 0%, transparent 50%),
+        linear-gradient(135deg, rgba(239, 246, 255, 0.8) 0%, rgba(245, 243, 255, 0.8) 50%, rgba(240, 253, 250, 0.8) 100%);
+    pointer-events: none;
+}
 
 .orb { position: absolute; border-radius: 50%; filter: blur(80px); z-index: 0; }
 .orb-1 { top:0; left:0; width:24rem; height:24rem; background: linear-gradient(135deg, rgba(191,219,254,0.4), rgba(221,214,254,0.4)); animation: pulse1 8s ease-in-out infinite;}
@@ -50,20 +67,192 @@ body {
 
 .header h1 { font-size:2rem; font-weight:700; margin-bottom:0.5rem; color:#1a1a1a; text-align:center; }
 
-.entry-card {
-    background: rgba(255,255,255,0.95);
-    backdrop-filter: blur(20px);
-    border-radius: 1rem;
-    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1),0 10px 10px -5px rgba(0,0,0,0.04);
-    border: 1px solid rgba(255,255,255,0.6);
+/* Journal Entry Cards */
+.journal-entry-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.875rem;
     padding: 1.5rem;
-    position: relative;
-    margin-bottom:1rem;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    animation: fadeIn 0.6s ease-out backwards;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+    animation: fadeIn 0.4s ease-out backwards;
 }
-.entry-card:hover { transform: translateY(-5px); box-shadow:0 10px 15px -3px rgba(0,0,0,0.1),0 4px 6px -2px rgba(0,0,0,0.05);}
-@keyframes fadeIn {from {opacity:0; transform:translateY(20px);} to{opacity:1; transform:translateY(0);}}
+
+.journal-entry-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-color: #d1d5db;
+    transform: translateY(-2px);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.journal-entry-header {
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #f3f4f6;
+}
+
+.journal-entry-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+}
+
+.journal-entry-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0;
+}
+
+.journal-entry-badges {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.journal-badge {
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.journal-entry-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.journal-entry-meta svg {
+    width: 14px;
+    height: 14px;
+    color: #9ca3af;
+}
+
+.journal-entry-content {
+    margin: 1.25rem 0;
+}
+
+.journal-entry-content p {
+    white-space: pre-wrap;
+    color: #1f2937;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    margin: 0;
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 0.5rem;
+    border-left: 4px solid #f59e0b;
+}
+
+.journal-entry-actions {
+    display: flex;
+    gap: 0.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.journal-edit-btn,
+.journal-delete-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.journal-edit-btn {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+}
+
+.journal-edit-btn:hover {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+}
+
+.journal-delete-btn {
+    background: #ef4444;
+    color: white;
+}
+
+.journal-delete-btn:hover {
+    background: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+/* Action Bar */
+.action-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #f3f4f6;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.entry-count {
+    font-size: 0.875rem;
+    color: #6b7280;
+    font-weight: 600;
+}
+
+/* Filter Section */
+.filter-section {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.filter-section .form-input {
+    flex: 1;
+    min-width: 200px;
+    margin-bottom: 0;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #6b7280;
+}
+
+.empty-state h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.error-message {
+    padding: 1rem;
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    border-radius: 0.5rem;
+    text-align: center;
+}
 
 /* Buttons */
 .journal-action-btn {
@@ -87,15 +276,5 @@ body {
 .form-input{width:100%; padding:0.75rem; border:2px solid #e5e7eb; border-radius:0.5rem; font-size:0.875rem; margin-bottom:1rem; outline:none; transition:all 0.2s ease;}
 .form-input:focus{border-color:#f59e0b; box-shadow:0 0 0 3px rgba(245,158,11,0.1);}
 
-/* Navbar */
-.navbar{position:fixed; top:0; left:0; width:100%; background:rgba(255,255,255,0.95); backdrop-filter:blur(10px); box-shadow:0 2px 4px rgba(0,0,0,0.05); z-index:50; padding:0.75rem 1.5rem; display:flex; justify-content:space-between; align-items:center;}
-.navbar-logo{font-size:1.5rem; font-weight:700; color:#9333ea; text-decoration:none; display:flex; align-items:center; gap:0.5rem; transition: color 0.2s;}
-.navbar-logo:hover{color:#7e22ce;}
-.nav-link{color:#4b5563; text-decoration:none; font-weight:500; transition: color 0.2s; font-size:0.95rem;}
-.nav-link:hover{color:#9333ea;}
-.profile-pic{width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,#60a5fa,#9333ea); color:white; display:flex; align-items:center; justify-content:center; font-size:1rem; font-weight:600; cursor:pointer; border:2px solid #e9d5ff; transition:all 0.2s ease;}
-.profile-pic:hover{transform:scale(1.05); box-shadow:0 0 0 4px rgba(147,51,234,0.2);}
-.dropdown-menu{position:absolute; top:100%; right:0; margin-top:0.75rem; width:200px; background:white; border-radius:0.5rem; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1),0 4px 6px -2px rgba(0,0,0,0.05); border:1px solid #e5e7eb; padding:0.5rem 0; opacity:0; visibility:hidden; transform:translateY(-10px); transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;}
-.dropdown-menu.show{opacity:1; visibility:visible; transform:translateY(0);}
 .dropdown-item{display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem; color:#4b5563; text-decoration:none; cursor:pointer; transition:background-color 0.2s; font-size:0.875rem;}
 .dropdown-item:hover{background-color:#f3f4f6; color:#9333ea;}

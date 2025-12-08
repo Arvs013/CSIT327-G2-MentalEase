@@ -1,0 +1,85 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MentalEase - Your Mental Wellness Companion</title>
+    <link rel="stylesheet" href="{% static 'students/css/home.css' %}">
+    <link rel="stylesheet" href="{% static 'students/css/navbar.css' %}">
+</head>
+<body>
+    <!-- Simple Navbar for non-authenticated pages -->
+    <nav class="user-navbar" style="background: rgba(255, 255, 255, 0.95);">
+        <div class="navbar-container">
+            <a href="{% url 'home' %}" class="navbar-logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                </svg>
+                <span>MentalEase</span>
+            </a>
+            <div class="navbar-menu">
+                <a href="{% url 'login' %}" class="nav-link">Login</a>
+                <a href="{% url 'signup' %}" class="nav-link">Sign Up</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="page-container" style="padding-top: 5rem;">
+        <div class="gradient-background"></div>
+        <div class="mental-health-cover"></div>
+
+        <div class="content-container">
+            <div class="content-card">
+                <div class="shimmer-effect"></div>
+
+                <div class="header">
+                    <div class="icon-wrapper">
+                        <svg class="heart-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                        </svg>
+                    </div>
+                    <h1>Welcome to MentalEase</h1>
+                    <p class="subtitle">Your journey to mental wellness starts here</p>
+                </div>
+
+                <div class="features-section">
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h3>Mood Tracking</h3>
+                        <p>Log your daily moods and track your emotional journey over time with interactive charts.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📓</div>
+                        <h3>Reflective Journaling</h3>
+                        <p>Express your thoughts and feelings in a safe, private space designed for self-reflection.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">💚</div>
+                        <h3>Wellness Resources</h3>
+                        <p>Access mental health guides, hotlines, and support resources whenever you need them.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">💬</div>
+                        <h3>Community Support</h3>
+                        <p>Share your thoughts and connect with others in a supportive community. Post anonymously or with your identity.</p>
+                    </div>
+                </div>
+
+                <div class="cta-section">
+                    <p class="cta-text">Ready to start your wellness journey?</p>
+                    <div class="button-group">
+                        <a href="{% url 'signup' %}" class="cta-button primary">Get Started</a>
+                        <a href="{% url 'login' %}" class="cta-button secondary">Log In</a>
+                    </div>
+                </div>
+
+                <div class="quote-section">
+                    <p class="quote">"Take care of your mind — you deserve peace."</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

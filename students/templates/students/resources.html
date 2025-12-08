@@ -1,0 +1,59 @@
+{% extends 'students/base_user.html' %}
+{% load static %}
+
+{% block title %}Resources - MentalEase{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'students/css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="gradient-background"></div>
+    <div class="mental-health-cover"></div>
+    
+    <div class="form-container">
+        <div class="form-card">
+            <header class="header">
+                <h1>Wellness Resources</h1>
+                <p class="subtitle">Find help and support when you need it</p>
+            </header>
+            
+            <div class="grid-container">
+                <!-- Hotlines -->
+                <section class="card">
+                    <div class="card-header">
+                        <h2>Crisis Hotlines</h2>
+                    </div>
+                    <ul class="resource-list" id="hotlinesList">
+                        <li style="text-align: center; color: #6b7280;">Loading hotlines...</li>
+                    </ul>
+                </section>
+                
+                <!-- Articles & Guides -->
+                <section class="card">
+                    <div class="card-header">
+                        <h2>Articles & Guides</h2>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <input type="text" id="resourceSearch" placeholder="Search resources..." 
+                               style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; margin-bottom: 0.5rem;">
+                        <select id="resourceTypeFilter" 
+                                style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem;">
+                            <option value="">All Types</option>
+                            <option value="article">Articles</option>
+                            <option value="guide">Guides</option>
+                        </select>
+                    </div>
+                    <ul class="resource-list" id="resourcesList">
+                        <li style="text-align: center; color: #6b7280;">Loading resources...</li>
+                    </ul>
+                </section>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'students/js/dashboard.js' %}"></script>
+{% endblock %}
+

@@ -1,64 +1,22 @@
+{% extends 'students/base_user.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MentalEase - Student Dashboard</title>
-    <link rel="stylesheet" href="{% static 'students/css/dashboard.css' %}">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-</head>
-<body data-student-id="{{ student.id }}">
-    
-    <!-- Navigation Bar -->
-    <nav class="navbar">
-        <a href="{% url 'dashboard' %}" class="navbar-logo">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-            </svg>
-            <span>MentalEase</span>
-        </a>
 
-        <div class="navbar-links">
-            <a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a>
-            <a href="{% url 'about_us' %}" class="nav-link">About Us</a>
-            <a href="{% url 'feed' %}" class="nav-link">Feed</a>
-            <a href="{% url 'resources_hub' %}" class="nav-link">Resources</a>
-        </div>
-        
-        <div class="profile-dropdown-container">
-            <div id="profilePic" class="profile-pic" title="Profile menu">
-                {{ student.username|slice:":1"|upper }}
-            </div>
-            <div id="profileDropdown" class="dropdown-menu">
-                <a href="{% url 'profile_page' %}" class="dropdown-item">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
-                        <circle cx="12" cy="7" r="4"/>
-                    </svg>
-                    My Profile
-                </a>
-                <div class="dropdown-item" id="openModalBtn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect width="20" height="16" x="2" y="4" rx="2"/>
-                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
-                    </svg>
-                    Change Email
-                </div>
-                <a href="{% url 'logout' %}" class="dropdown-item">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                        <polyline points="16 17 21 12 16 7"/>
-                        <line x1="21" x2="9" y1="12" y2="12"/>
-                    </svg>
-                    Logout
-                </a>
-            </div>
-        </div>
-    </nav>
+{% block title %}Dashboard - MentalEase{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'students/css/dashboard.css' %}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="gradient-background"></div>
+<div class="mental-health-cover"></div>
+
+<script>
+    document.body.setAttribute('data-student-id', '{{ student.id }}');
+</script>
 
     <!-- Background Orbs and Circles -->
-    <div class="gradient-background"></div>
     <div class="orb orb-1"></div>
     <div class="orb orb-2"></div>
     <div class="orb orb-3"></div>
@@ -281,18 +239,20 @@
             </form>
         </div>
     </div>
+</div>
+{% endblock %}
 
-    <!-- Supabase library (only once!) -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
-    <script>
-        window.CURRENT_STUDENT_ID = document.body.dataset.studentId;
-        const supabaseUrl = 'https://YOUR_SUPABASE_PROJECT_URL';
-        const supabaseKey = 'YOUR_SUPABASE_ANON_KEY';
-        window.supabase = supabase.createClient(supabaseUrl, supabaseKey);
-    </script>
+{% block extra_js %}
+<!-- Supabase library (only once!) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
+<script>
+    window.CURRENT_STUDENT_ID = document.body.dataset.studentId;
+    const supabaseUrl = 'https://YOUR_SUPABASE_PROJECT_URL';
+    const supabaseKey = 'YOUR_SUPABASE_ANON_KEY';
+    window.supabase = supabase.createClient(supabaseUrl, supabaseKey);
+</script>
 
-    <!-- Your scripts -->
-    <script src="{% static 'students/js/dashboard.js' %}"></script>
-    <script src="{% static 'students/js/mood.js' %}"></script> 
-</body>
-</html>
+<!-- Your scripts -->
+<script src="{% static 'students/js/dashboard.js' %}"></script>
+<script src="{% static 'students/js/mood.js' %}"></script>
+{% endblock %}

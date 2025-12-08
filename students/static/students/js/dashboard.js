@@ -132,40 +132,77 @@ window.addEventListener('load', function () {
         filterAndSort();
     }
 
+    // ===== Helper function to get CSRF token =====
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
     // ===== Save Journal Entry =====
     saveJournalBtn.addEventListener('click', async () => {
-    const content = journalTextarea.value.trim();
-    if (!content) {
-        alert('Cannot save empty journal entry');
-        return;
-    }
+        const content = journalTextarea.value.trim();
+        if (!content) {
+            journalMessage.textContent = 'Cannot save empty journal entry';
+            journalMessage.style.display = 'block';
+            journalMessage.style.color = '#dc2626';
+            journalMessage.style.background = '#fef2f2';
+            journalMessage.style.border = '1px solid #fecaca';
+            return;
+        }
 
-    const { data, error } = await supabase
-        .from('journals')
-        .insert([{
-            student_id: CURRENT_STUDENT_ID,
-            title: "Journal Reflection",  // default title
-            content: content,
-            created_at: new Date().toISOString()
-        }])
-        .select()
-        .single();
+        try {
+            const response = await fetch('/api/journals/create/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    content: content,
+                    title: 'Journal Reflection'
+                })
+            });
 
-    if (error) {
-        journalMessage.textContent = 'Failed to save entry: ' + error.message;
-        console.error(error);
-        return;
-    }
+            const data = await response.json();
 
-    // Optional: show success message briefly
-    journalMessage.textContent = 'Reflection saved! Redirecting...';
-    journalTextarea.value = '';
+            if (data.success) {
+                journalMessage.textContent = 'Reflection saved successfully!';
+                journalMessage.style.display = 'block';
+                journalMessage.style.color = '#166534';
+                journalMessage.style.background = '#f0fdf4';
+                journalMessage.style.border = '1px solid #bbf7d0';
+                journalTextarea.value = '';
 
-    // Redirect to journal entries page after 1 second
-    setTimeout(() => {
-        window.location.href = '/journal_entries/'; // adjust URL if needed
-    }, 1000);
-});
+                // Clear message after 3 seconds
+                setTimeout(() => {
+                    journalMessage.style.display = 'none';
+                }, 3000);
+            } else {
+                journalMessage.textContent = 'Failed to save entry: ' + (data.error || 'Unknown error');
+                journalMessage.style.display = 'block';
+                journalMessage.style.color = '#dc2626';
+                journalMessage.style.background = '#fef2f2';
+                journalMessage.style.border = '1px solid #fecaca';
+            }
+        } catch (error) {
+            journalMessage.textContent = 'Failed to save entry: ' + error.message;
+            journalMessage.style.display = 'block';
+            journalMessage.style.color = '#dc2626';
+            journalMessage.style.background = '#fef2f2';
+            journalMessage.style.border = '1px solid #fecaca';
+            console.error('Error saving journal:', error);
+        }
+    });
 
     // ===== Edit Journal Entry =====
     function openEditModal(id) {

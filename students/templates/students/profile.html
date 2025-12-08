@@ -1,82 +1,41 @@
+{% extends is_admin_flag|yesno:"students/base_admin.html,students/base_user.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MentalEase - My Profile</title>
-    <link rel="stylesheet" href="{% static 'students/css/profile.css' %}">
-</head>
-<body>
-    
-    <!-- Navigation Bar -->
-    <nav class="navbar">
-        <a href="{% url 'dashboard' %}" class="navbar-logo">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-            </svg>
-            <span>MentalEase</span>
-        </a>
 
-        <div class="navbar-links">
-            <a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a>
-            <a href="{% url 'about_us' %}" class="nav-link">About Us</a>
-        </div>
-        
-        <div class="profile-dropdown-container">
-            <div id="profilePic" class="profile-pic" title="Profile menu">
-                {{ student.username|slice:":1"|upper }}
-            </div>
-            <div id="profileDropdown" class="dropdown-menu">
-                <a href="{% url 'profile_page' %}" class="dropdown-item">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
-                        <circle cx="12" cy="7" r="4"/>
-                    </svg>
-                    My Profile
-                </a>
-                <a href="{% url 'logout' %}" class="dropdown-item">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                        <polyline points="16 17 21 12 16 7"/>
-                        <line x1="21" x2="9" y1="12" y2="12"/>
-                    </svg>
-                    Logout
-                </a>
-            </div>
-        </div>
-    </nav>
+{% block title %}My Profile - MentalEase{% endblock %}
 
-    <!-- Background Orbs and Circles -->
-    <div class="gradient-background"></div>
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="orb orb-3"></div>
-    <div class="floating-circle circle-1"></div>
-    <div class="floating-circle circle-2"></div>
-    <div class="floating-circle circle-3"></div>
-    
-    <div class="page-container">
-        <div class="form-container"> 
-            <div class="form-card">
-                <div class="shimmer-effect"></div>
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'students/css/profile.css' %}">
+{% endblock %}
 
-                <header class="header">
-                    <div class="profile-avatar-large">
+{% block content %}
+<div class="gradient-background"></div>
+<div class="mental-health-cover"></div>
+
+<div class="page-container">
+    <div class="form-container"> 
+        <div class="form-card">
+            <div class="shimmer-effect"></div>
+
+            <header class="header">
+                <div class="profile-avatar-large">
+                    {% if student.profile_picture_url %}
+                        <img src="{{ student.profile_picture_url }}" alt="Profile" class="avatar-image-large">
+                    {% else %}
                         {{ student.username|slice:":1"|upper }}
-                    </div>
-                    <h1>My <span class="student-name">Profile</span></h1>
-                    <p class="subtitle">Manage your account information</p>
-                </header>
+                    {% endif %}
+                </div>
+                <h1>My <span class="student-name">Profile</span></h1>
+                <p class="subtitle">Manage your account information</p>
+            </header>
 
-                <!-- Back Button -->
+                <!-- Action Buttons -->
                 <div class="action-bar">
-                    <a href="{% url 'dashboard' %}" class="back-btn">
+                    <a href="{% url 'profile_edit' %}" class="edit-btn">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="m12 19-7-7 7-7"/>
-                            <path d="M19 12H5"/>
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                         </svg>
-                        Back to Dashboard
+                        Edit Profile
                     </a>
                 </div>
 
@@ -92,15 +51,16 @@
 
                     <div class="info-grid">
                         <div class="info-item">
+                            <label class="info-label">Full Name</label>
+                            <div class="info-value">
+                                <span id="fullNameDisplay">{{ student.full_name|default:"Not set" }}</span>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
                             <label class="info-label">Username</label>
                             <div class="info-value">
                                 <span id="usernameDisplay">{{ student.username }}</span>
-                                <button class="edit-icon-btn" id="editUsernameBtn">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
-                                        <path d="m15 5 4 4"/>
-                                    </svg>
-                                </button>
                             </div>
                         </div>
 
@@ -108,19 +68,27 @@
                             <label class="info-label">Email</label>
                             <div class="info-value">
                                 <span id="emailDisplay">{{ student.email|default:"Not set" }}</span>
-                                <button class="edit-icon-btn" id="editEmailBtn">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
-                                        <path d="m15 5 4 4"/>
-                                    </svg>
-                                </button>
                             </div>
                         </div>
 
                         <div class="info-item">
                             <label class="info-label">Member Since</label>
                             <div class="info-value">
-                                <span>{{ student.date_joined|date:"F d, Y" }}</span>
+                                {% if student.date_joined %}
+                                    {% if student.date_joined|date:"F d, Y" %}
+                                        <span>{{ student.date_joined|date:"F d, Y" }}</span>
+                                    {% else %}
+                                        <span>{{ student.date_joined }}</span>
+                                    {% endif %}
+                                {% elif student.created_at %}
+                                    {% if student.created_at|date:"F d, Y" %}
+                                        <span>{{ student.created_at|date:"F d, Y" }}</span>
+                                    {% else %}
+                                        <span>{{ student.created_at }}</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span>Not available</span>
+                                {% endif %}
                             </div>
                         </div>
 
@@ -130,6 +98,42 @@
                                 <span class="status-badge active">Active</span>
                             </div>
                         </div>
+
+                        {% if student.bio %}
+                        <div class="info-item">
+                            <label class="info-label">Bio</label>
+                            <div class="info-value">
+                                <span>{{ student.bio }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if student.phone %}
+                        <div class="info-item">
+                            <label class="info-label">Phone Number</label>
+                            <div class="info-value">
+                                <span>{{ student.phone }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if student.location %}
+                        <div class="info-item">
+                            <label class="info-label">Location</label>
+                            <div class="info-value">
+                                <span>{{ student.location }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if student.date_of_birth %}
+                        <div class="info-item">
+                            <label class="info-label">Date of Birth</label>
+                            <div class="info-value">
+                                <span>{{ student.date_of_birth|date:"F d, Y"|default:student.date_of_birth }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
 
@@ -248,8 +252,10 @@
             </form>
         </div>
     </div>
+</div>
 
+{% endblock %}
 
-    <script src="{% static 'students/js/profile.js' %}"></script>
-</body>
-</html>
+{% block extra_js %}
+<script src="{% static 'students/js/profile.js' %}"></script>
+{% endblock %}
