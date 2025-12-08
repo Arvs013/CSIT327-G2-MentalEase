@@ -65,3 +65,9 @@ class Resource(models.Model):
 
     def __str__(self):
         return self.title
+
+class Journal(models.Model):
+    student_id = models.ForeignKey(Student, on_delete=models.CASCADE)
+    title = models.CharField(max_length=255, default='Reflective Journal')
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)

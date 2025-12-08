@@ -8,30 +8,58 @@
     <link rel="stylesheet" href="{% static 'students/css/journal_entries.css' %}">
 </head>
 <body>
-    
-    <!-- Navigation Bar -->
+    <!-- make CSRF token available to JS fetch calls -->
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+   <!-- Navigation Bar (Same as Dashboard) -->
     <nav class="navbar">
-        <a href="{% url 'dashboard' %}" class="navbar-logo">MentalEase</a>
+        <a href="{% url 'dashboard' %}" class="navbar-logo">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+            </svg>
+            <span>MentalEase</span>
+        </a>
+
         <div class="navbar-links">
             <a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a>
             <a href="{% url 'about_us' %}" class="nav-link">About Us</a>
+            <a href="{% url 'feed' %}" class="nav-link">Feed</a>
+            <a href="{% url 'resources_hub' %}" class="nav-link">Resources</a>
         </div>
+        
         <div class="profile-dropdown-container">
-            <div id="profilePic" class="profile-pic">{{ student.username|slice:":1"|upper }}</div>
+            <div id="profilePic" class="profile-pic" title="Profile menu">
+                {{ student.username|slice:":1"|upper }}
+            </div>
             <div id="profileDropdown" class="dropdown-menu">
-                <a href="{% url 'profile_page' %}" class="dropdown-item">My Profile</a>
-                <a href="{% url 'logout' %}" class="dropdown-item">Logout</a>
+                <a href="{% url 'profile_page' %}" class="dropdown-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    My Profile
+                </a>
+                <div class="dropdown-item" id="openModalBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect width="20" height="16" x="2" y="4" rx="2"/>
+                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                    </svg>
+                    Change Email
+                </div>
+                <a href="{% url 'logout' %}" class="dropdown-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16 17 21 12 16 7"/>
+                        <line x1="21" x2="9" y1="12" y2="12"/>
+                    </svg>
+                    Logout
+                </a>
             </div>
         </div>
     </nav>
 
     <!-- Page Container with dashboard-style background -->
     <div class="page-container">
-        <div class="gradient-background"></div>
-        <div class="orb orb-1"></div>
-        <div class="orb orb-2"></div>
-        <div class="orb orb-3"></div>
-
         <div class="form-card">
             <header class="header">
                 <h1>My Journal Entries</h1>
@@ -39,7 +67,6 @@
 
             <!-- Action Bar -->
             <div class="action-bar">
-                <a href="{% url 'dashboard' %}" class="journal-action-btn">Back to Dashboard</a>
                 <div class="entry-count">
                     <span id="totalEntries">{{ journals|length }}</span> Total Entries
                 </div>
@@ -59,6 +86,23 @@
                 <div class="empty-state" id="emptyState" {% if journals %}style="display:none;"{% endif %}>
                     <h3>No Journal Entries Yet</h3>
                 </div>
+
+                <!-- Table view for journal entries -->
+                <div class="table-wrapper" {% if journals %}style="display: block;"{% else %}style="display: none;"{% endif %}>
+                    <table class="journal-table" id="entriesTable">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Content</th>
+                                <th>Created At</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="entriesTbody">
+                            <!-- rows rendered by JS -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -71,9 +115,12 @@
                 <button id="closeEditModal" class="close-button">&times;</button>
             </div>
             <form id="editForm">
-                <textarea id="editTextarea" rows="8" class="form-input"></textarea>
-                <button type="button" id="cancelEditBtn" class="journal-action-btn">Cancel</button>
-                <button type="submit" class="journal-action-btn">Save Changes</button>
+                <input id="editTitle" name="title" type="text" class="form-input" placeholder="Title (optional)" />
+                <textarea id="editTextarea" rows="8" class="form-input" placeholder="Content"></textarea>
+                <div class="modal-actions">
+                    <button type="button" id="cancelEditBtn" class="journal-action-btn cancel-btn">Cancel</button>
+                    <button type="submit" class="journal-action-btn save-btn">Save Changes</button>
+                </div>
             </form>
         </div>
     </div>
@@ -85,23 +132,41 @@
                 <h3>Delete Entry?</h3>
                 <button id="closeDeleteModal" class="close-button">&times;</button>
             </div>
-            <p>Are you sure you want to delete this journal entry? This action cannot be undone.</p>
-            <button id="cancelDeleteBtn" class="journal-action-btn">Cancel</button>
-            <button id="confirmDeleteBtn" class="journal-action-btn">Delete</button>
+            <p class="modal-text">Are you sure you want to delete this journal entry? This action cannot be undone.</p>
+            <div class="modal-actions">
+                <button id="cancelDeleteBtn" class="journal-action-btn cancel-btn">Cancel</button>
+                <button id="confirmDeleteBtn" class="journal-action-btn delete-btn">Delete</button>
+            </div>
         </div>
     </div>
 
-    <!-- Supabase JS Client -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
+    <!-- Pass journals data to JavaScript -->
     <script>
-    const supabaseUrl = 'https://YOUR_SUPABASE_PROJECT_URL';
-    const supabaseKey = 'YOUR_SUPABASE_ANON_KEY';
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        console.log('Raw journals template:', '{{ journals|safe|escapejs }}');
+        try {
+            window.journalsData = JSON.parse('{{ journals|safe|escapejs }}');
+            console.log('✅ Parsed journalsData:', window.journalsData);
+        } catch (err) {
+            console.error('❌ JSON parse error:', err);
+            window.journalsData = [];
+        }
     </script>
 
-    <!-- Pass current student ID from Django to JS -->
     <script>
-    const CURRENT_STUDENT_ID = "{{ student.id }}";
+        // Profile dropdown functionality
+        const profilePic = document.getElementById('profilePic');
+        const profileDropdown = document.getElementById('profileDropdown');
+
+        profilePic.addEventListener('click', (e) => {
+            e.stopPropagation();
+            profileDropdown.classList.toggle('show');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!profilePic.contains(e.target) && !profileDropdown.contains(e.target)) {
+                profileDropdown.classList.remove('show');
+            }
+        });
     </script>
 
     <!-- Your custom JS -->

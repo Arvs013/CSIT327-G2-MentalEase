@@ -889,3 +889,79 @@ h1 {
         font-size: 0.85rem;
     }
 }
+.journal-title-input {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 1.1rem;
+    color: #1e293b;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    background: white;
+}
+
+.journal-title-input:focus {
+    outline: none;
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.journal-title-input::placeholder {
+    color: #94a3b8;
+    font-size: 1rem;
+}
+
+/* Journal Textarea - Matching Style */
+#journalTextarea {
+    width: 100%;
+    min-height: 150px;
+    padding: 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 1.05rem;
+    color: #1e293b;
+    line-height: 1.6;
+    resize: vertical;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    background: white;
+}
+
+#journalTextarea:focus {
+    outline: none;
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+#journalTextarea::placeholder {
+    color: #94a3b8;
+    font-size: 1rem;
+}
+
+/* Alternative: Even Softer/Rounder Style */
+.journal-title-input.soft-style {
+    border: 2px solid #f1f5f9;
+    border-radius: 12px;
+    background: #f8fafc;
+    font-size: 1.1rem;
+}
+
+.journal-title-input.soft-style:focus {
+    background: white;
+    border-color: #8b5cf6;
+}
+
+/* Alternative: Minimal Underline Style */
+.journal-title-input.underline-style {
+    border: none;
+    border-bottom: 2px solid #e2e8f0;
+    border-radius: 0;
+    padding: 0.875rem 0.5rem;
+    font-size: 1.15rem;
+}
+
+.journal-title-input.underline-style:focus {
+    border-bottom-color: #8b5cf6;
+    box-shadow: none;
+}

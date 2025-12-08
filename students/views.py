@@ -6,11 +6,12 @@ from .forms import StudentSignUpForm, StudentLoginForm
 from .supabase_client import supabase  # make sure you have supabase_client.py configured
 from django.db.models import Count
 from django.contrib.auth.decorators import login_required
-from .models import Post, Like, Comment, Student
+from .models import Post, Like, Comment, Student, Journal, Resource
 from .forms import PostForm 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
-from .models import Resource
+from django.shortcuts import get_object_or_404
+import json
 
 
 # 📝 Student Sign Up
@@ -96,20 +97,6 @@ def student_profile(request):
 #About Us
 def about_us(request):
     return render(request, 'students/about_us.html')
-
-def journal_entries(request):
-    student = request.session.get('student', None)
-    if not student:
-        return redirect('login')
-    
-    # Fetch entries from your Supabase table (replace 'journal' with your table name)
-    response = supabase.table('journals').select('*').eq('student_id', student['id']).execute()
-    entries = response.data if response.data else []
-
-    return render(request, 'students/journal_entries.html', {
-        'student': student,
-        'entries': entries
-    })
 
 
 
@@ -283,3 +270,168 @@ def resources_hub(request):
         'query': query,
         'category': category,
     })
+
+def create_journal(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            student_id = data.get('student_id')
+            title = data.get('title', 'Reflective Journal')
+            content = data.get('content')
+
+            if not content:
+                return JsonResponse({'success': False, 'error': 'Content is required.'})
+
+            journal = Journal.objects.create(
+                student_id_id=student_id,  # if ForeignKey
+                title=title,
+                content=content
+            )
+            return JsonResponse({'success': True, 'entry': {'id': journal.id, 'title': journal.title, 'content': journal.content}})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method.'})
+
+def save_journal_entry(request):
+    if request.method == 'POST':
+        student_session = request.session.get('student')
+        if not student_session:
+            return JsonResponse({'success': False, 'error': 'Not logged in'}, status=401)
+
+        # Get or create local Django Student from session
+        email = student_session.get('email')
+        username = student_session.get('username') or (email.split('@')[0] if email else None)
+        full_name = student_session.get('full_name') or username
+
+        try:
+            student_obj, _ = Student.objects.get_or_create(
+                email=email,
+                defaults={'username': username, 'full_name': full_name}
+            )
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+        try:
+            data = json.loads(request.body)
+            content = data.get('content', '').strip()
+            title = data.get('title', 'Reflective Journal').strip() or 'Reflective Journal'
+
+            if not content:
+                return JsonResponse({'success': False, 'error': 'Content cannot be empty'}, status=400)
+
+            journal = Journal.objects.create(
+                student_id=student_obj,
+                title=title,
+                content=content
+            )
+
+            return JsonResponse({
+                'success': True,
+                'id': journal.id,
+                'title': journal.title,
+                'content': journal.content,
+                'created_at': journal.created_at.isoformat()
+            })
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
+
+
+def journal_entries_view(request):
+    student_session = request.session.get('student')
+    if not student_session:
+        return redirect('login')
+
+    email = student_session.get('email')
+    if not email:
+        messages.error(request, "Invalid session.")
+        return redirect('login')
+
+    try:
+        student_obj = Student.objects.get(email=email)
+    except Student.DoesNotExist:
+        messages.error(request, "Student not found.")
+        return redirect('login')
+
+    journals_qs = Journal.objects.filter(student_id=student_obj).order_by('-created_at')
+
+    # Convert to list of dicts
+    journals_data = [
+        {
+            'id': j.id,
+            'title': j.title or 'Journal Entry',
+            'content': j.content,
+            'created_at': j.created_at.isoformat() if j.created_at else ''
+        }
+        for j in journals_qs
+    ]
+
+    print(f"DEBUG: journals_data = {journals_data}")
+
+    context = {
+        'student': student_session,
+        'journals': json.dumps(journals_data),  # Must be JSON string
+    }
+    return render(request, 'students/journal_entries.html', context)
+
+
+def edit_journal_entry(request, journal_id):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid method'}, status=400)
+
+    student_session = request.session.get('student')
+    if not student_session:
+        return JsonResponse({'success': False, 'error': 'Not logged in'}, status=401)
+
+    try:
+        email = student_session.get('email')
+        student_obj = Student.objects.get(email=email)
+    except Student.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Student not found'}, status=404)
+
+    journal = get_object_or_404(Journal, id=journal_id)
+    if journal.student_id != student_obj:
+        return JsonResponse({'success': False, 'error': 'Not authorized'}, status=403)
+
+    try:
+        data = json.loads(request.body)
+        title = (data.get('title') or '').strip()
+        content = (data.get('content') or '').strip()
+        if not content:
+            return JsonResponse({'success': False, 'error': 'Content cannot be empty'})
+        journal.content = content
+        if title != '':
+            journal.title = title
+        journal.save()
+        return JsonResponse({'success': True, 'id': journal.id, 'title': journal.title, 'content': journal.content})
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+def delete_journal_entry(request, journal_id):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Invalid request'}, status=400)
+
+    student_session = request.session.get('student')
+    if not student_session:
+        return JsonResponse({'error': 'Not logged in'}, status=401)
+
+    try:
+        email = student_session.get('email')
+        student_obj = Student.objects.get(email=email)
+    except Student.DoesNotExist:
+        return JsonResponse({'error': 'Student not found'}, status=404)
+
+    journal = get_object_or_404(Journal, id=journal_id)
+
+    if journal.student_id != student_obj:
+        return JsonResponse({'error': 'Not authorized'}, status=403)
+
+    journal.delete()
+    return JsonResponse({'success': True})

@@ -2,14 +2,21 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    # Authentication URLs & Dashboard URLs
     path('signup/', views.signup_view, name='signup'),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('dashboard/', views.student_dashboard, name='dashboard'),
     path('profile/', views.student_profile, name='profile_page'),
     path('about-us/', views.about_us, name='about_us'),
-    path('journal-entries/', views.journal_entries, name='journal_entries'),
-
+    
+    # Journal URLs
+    path('dashboard/save_journal/', views.save_journal_entry, name='save_journal'),
+    path('journal_entries/', views.journal_entries_view, name='journal_entries'),
+    path('journal/<int:journal_id>/edit/', views.edit_journal_entry, name='edit_journal'),
+    path('journal/<int:journal_id>/delete/', views.delete_journal_entry, name='delete_journal'),
+    
+    
     # Feed URLs
     path('feed/', views.feed_view, name='feed'),
     path('toggle-like/<int:post_id>/', views.toggle_like, name='toggle_like'),

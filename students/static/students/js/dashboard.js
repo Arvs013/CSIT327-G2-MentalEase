@@ -1,12 +1,4 @@
-// ===== Initialize after window loads to ensure Supabase is ready =====
-window.addEventListener('load', function () {
-    if (!window.supabase) {
-    console.error('Supabase not initialized!');
-}
-
-    const supabase = window.supabase;
-    const CURRENT_STUDENT_ID = window.CURRENT_STUDENT_ID;
-
+document.addEventListener('DOMContentLoaded', () => {
     // ===== Profile Dropdown =====
     const profilePic = document.getElementById('profilePic');
     const profileDropdown = document.getElementById('profileDropdown');
@@ -20,6 +12,68 @@ window.addEventListener('load', function () {
         window.addEventListener('click', e => {
             if (!profilePic.contains(e.target) && !profileDropdown.contains(e.target)) {
                 profileDropdown.classList.remove('show');
+            }
+        });
+    }
+
+    // ===== Journal Save =====
+    const saveJournalBtn = document.getElementById('saveJournalBtn');
+    const journalTitle = document.getElementById('journalTitle');
+    const journalTextarea = document.getElementById('journalTextarea');
+    const journalMessage = document.getElementById('journalMessage');
+    const viewEntriesLink = document.getElementById('viewEntriesLink');
+
+    if (saveJournalBtn) {
+        saveJournalBtn.addEventListener('click', async () => {
+            const title = journalTitle.value.trim();
+            const content = journalTextarea.value.trim();
+
+            if (!content) {
+                journalMessage.textContent = "Cannot save empty journal entry.";
+                journalMessage.style.color = "red";
+                journalMessage.style.display = "block";
+                setTimeout(() => journalMessage.style.display = "none", 2500);
+                return;
+            }
+
+            try {
+                const res = await fetch('/students/dashboard/save_journal/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({
+                        title: title || 'Reflective Journal',
+                        content: content
+                    })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    journalMessage.textContent = "✅ Entry saved successfully!";
+                    journalMessage.style.color = "green";
+                    journalMessage.style.display = "block";
+                    journalTitle.value = '';
+                    journalTextarea.value = '';
+                    
+                    // Navigate using the link's href (Django already rendered the URL)
+                    setTimeout(() => {
+                        window.location.href = viewEntriesLink.href;
+                    }, 1500);
+                } else {
+                    journalMessage.textContent = "❌ Failed: " + (data.error || "Unknown error");
+                    journalMessage.style.color = "red";
+                    journalMessage.style.display = "block";
+                    setTimeout(() => journalMessage.style.display = "none", 2500);
+                }
+            } catch (err) {
+                console.error(err);
+                journalMessage.textContent = "❌ An error occurred.";
+                journalMessage.style.color = "red";
+                journalMessage.style.display = "block";
+                setTimeout(() => journalMessage.style.display = "none", 2500);
             }
         });
     }
@@ -39,29 +93,25 @@ window.addEventListener('load', function () {
     const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
     const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
     const editForm = document.getElementById('editForm');
-    const editTitleInput = document.getElementById('editTitleInput');
-    const editContentTextarea = document.getElementById('editContentTextarea');
-
-    const saveJournalBtn = document.getElementById('saveJournalBtn');
-    const journalTitleInput = document.getElementById('journalTitle');
-    const journalTextarea = document.getElementById('journalTextarea');
-    const journalMessage = document.getElementById('journalMessage');
+    const editTextarea = document.getElementById('editTextarea');
 
     let currentEditId = null;
     let currentDeleteId = null;
-    let journalEntries = [];
-    let filteredEntries = [];
+
+    // ===== Initialize Entries from window.journalsData =====
+    let journalEntries = window.journalsData || [];
+    let filteredEntries = [...journalEntries];
+
+    console.log('Loaded journals:', journalEntries);
 
     // ===== Display Entries =====
     function displayEntries() {
         entriesContainer.innerHTML = '';
-
-        if (!filteredEntries.length) {
+        if (filteredEntries.length === 0) {
             emptyState.style.display = 'block';
             totalEntriesSpan.textContent = '0';
             return;
         }
-
         emptyState.style.display = 'none';
         totalEntriesSpan.textContent = filteredEntries.length;
 
@@ -69,10 +119,13 @@ window.addEventListener('load', function () {
             const card = document.createElement('div');
             card.className = 'journal-entry';
             card.dataset.id = entry.id;
+            const date = new Date(entry.created_at).toLocaleString();
             card.innerHTML = `
-                <h3>${entry.title || 'New Entry'}</h3>
-                <p>${entry.content}</p>
-                <small>${new Date(entry.created_at).toLocaleString()}</small>
+                <div class="entry-header">
+                    <h3>${entry.title || 'Journal Entry'}</h3>
+                    <small>${date}</small>
+                </div>
+                <p class="entry-content">${entry.content}</p>
                 <div class="entry-actions">
                     <button class="edit-btn" data-id="${entry.id}">Edit</button>
                     <button class="delete-btn" data-id="${entry.id}">Delete</button>
@@ -86,21 +139,21 @@ window.addEventListener('load', function () {
 
     // ===== Attach Edit/Delete Buttons =====
     function attachEntryButtons() {
-        document.querySelectorAll('.edit-btn').forEach(btn =>
-            btn.addEventListener('click', () => openEditModal(btn.dataset.id))
-        );
-        document.querySelectorAll('.delete-btn').forEach(btn =>
-            btn.addEventListener('click', () => openDeleteModal(btn.dataset.id))
-        );
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', () => openEditModal(btn.dataset.id));
+        });
+
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', () => openDeleteModal(btn.dataset.id));
+        });
     }
 
     // ===== Search & Sort =====
     function filterAndSort() {
         const searchTerm = searchInput.value.toLowerCase();
-
         filteredEntries = journalEntries.filter(e =>
             (e.title || '').toLowerCase().includes(searchTerm) ||
-            e.content.toLowerCase().includes(searchTerm)
+            (e.content || '').toLowerCase().includes(searchTerm)
         );
 
         filteredEntries.sort((a, b) => {
@@ -112,69 +165,15 @@ window.addEventListener('load', function () {
         displayEntries();
     }
 
-    searchInput.addEventListener('input', filterAndSort);
-    sortSelect.addEventListener('change', filterAndSort);
-
-    // ===== Load Entries =====
-    async function loadEntries() {
-        if (!CURRENT_STUDENT_ID) return console.error('Student ID not defined');
-
-        const { data, error } = await supabase
-            .from('journals')
-            .select('*')
-            .eq('student_id', CURRENT_STUDENT_ID)
-            .order('created_at', { ascending: false });
-
-        if (error) return console.error(error);
-
-        journalEntries = data || [];
-        filteredEntries = [...journalEntries];
-        filterAndSort();
-    }
-
-    // ===== Save Journal Entry =====
-    saveJournalBtn.addEventListener('click', async () => {
-    const content = journalTextarea.value.trim();
-    if (!content) {
-        alert('Cannot save empty journal entry');
-        return;
-    }
-
-    const { data, error } = await supabase
-        .from('journals')
-        .insert([{
-            student_id: CURRENT_STUDENT_ID,
-            title: "Journal Reflection",  // default title
-            content: content,
-            created_at: new Date().toISOString()
-        }])
-        .select()
-        .single();
-
-    if (error) {
-        journalMessage.textContent = 'Failed to save entry: ' + error.message;
-        console.error(error);
-        return;
-    }
-
-    // Optional: show success message briefly
-    journalMessage.textContent = 'Reflection saved! Redirecting...';
-    journalTextarea.value = '';
-
-    // Redirect to journal entries page after 1 second
-    setTimeout(() => {
-        window.location.href = '/journal_entries/'; // adjust URL if needed
-    }, 1000);
-});
+    if (searchInput) searchInput.addEventListener('input', filterAndSort);
+    if (sortSelect) sortSelect.addEventListener('change', filterAndSort);
 
     // ===== Edit Journal Entry =====
     function openEditModal(id) {
         currentEditId = id;
         const entry = journalEntries.find(e => e.id == id);
         if (!entry) return;
-
-        editTitleInput.value = entry.title;
-        editContentTextarea.value = entry.content;
+        editTextarea.value = entry.content;
         editModal.style.display = 'block';
     }
 
@@ -183,32 +182,47 @@ window.addEventListener('load', function () {
         currentEditId = null;
     }
 
-    closeEditModal.addEventListener('click', closeEditModalFunc);
-    cancelEditBtn.addEventListener('click', closeEditModalFunc);
+    if (closeEditModal) closeEditModal.addEventListener('click', closeEditModalFunc);
+    if (cancelEditBtn) cancelEditBtn.addEventListener('click', closeEditModalFunc);
 
-    editForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        if (!currentEditId) return;
+    if (editForm) {
+        editForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentEditId) return;
 
-        const updatedTitle = editTitleInput.value.trim() || 'New Entry';
-        const updatedContent = editContentTextarea.value.trim();
-        if (!updatedContent) return alert('Text cannot be empty');
+            const newContent = editTextarea.value.trim();
+            if (!newContent) {
+                alert('Content cannot be empty');
+                return;
+            }
 
-        const { data, error } = await supabase
-            .from('journals')
-            .update({ title: updatedTitle, content: updatedContent })
-            .eq('id', currentEditId)
-            .select()
-            .single();
+            try {
+                const res = await fetch(`/students/journal/${currentEditId}/edit/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value || ''
+                    },
+                    body: JSON.stringify({ content: newContent })
+                });
 
-        if (error) return alert('Failed to update entry: ' + error.message);
-
-        const index = journalEntries.findIndex(e => e.id == currentEditId);
-        if (index > -1) journalEntries[index] = data;
-
-        filterAndSort();
-        closeEditModalFunc();
-    });
+                const data = await res.json();
+                if (data.success) {
+                    const index = journalEntries.findIndex(e => e.id == currentEditId);
+                    if (index > -1) {
+                        journalEntries[index].content = newContent;
+                    }
+                    filterAndSort();
+                    closeEditModalFunc();
+                } else {
+                    alert('Failed to update: ' + (data.error || 'Unknown error'));
+                }
+            } catch (err) {
+                console.error('Edit error:', err);
+                alert('Error updating entry');
+            }
+        });
+    }
 
     // ===== Delete Journal Entry =====
     function openDeleteModal(id) {
@@ -221,24 +235,37 @@ window.addEventListener('load', function () {
         currentDeleteId = null;
     }
 
-    closeDeleteModal.addEventListener('click', closeDeleteModalFunc);
-    cancelDeleteBtn.addEventListener('click', closeDeleteModalFunc);
+    if (closeDeleteModal) closeDeleteModal.addEventListener('click', closeDeleteModalFunc);
+    if (cancelDeleteBtn) cancelDeleteBtn.addEventListener('click', closeDeleteModalFunc);
 
-    confirmDeleteBtn.addEventListener('click', async () => {
-        if (!currentDeleteId) return;
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener('click', async () => {
+            if (!currentDeleteId) return;
 
-        const { error } = await supabase
-            .from('journals')
-            .delete()
-            .eq('id', currentDeleteId);
+            try {
+                const res = await fetch(`/students/journal/${currentDeleteId}/delete/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value || ''
+                    }
+                });
 
-        if (error) return alert('Failed to delete entry: ' + error.message);
-
-        journalEntries = journalEntries.filter(e => e.id != currentDeleteId);
-        filterAndSort();
-        closeDeleteModalFunc();
-    });
+                const data = await res.json();
+                if (data.success) {
+                    journalEntries = journalEntries.filter(e => e.id != currentDeleteId);
+                    filterAndSort();
+                    closeDeleteModalFunc();
+                } else {
+                    alert('Failed to delete: ' + (data.error || 'Unknown error'));
+                }
+            } catch (err) {
+                console.error('Delete error:', err);
+                alert('Error deleting entry');
+            }
+        });
+    }
 
     // ===== Initialize =====
-    loadEntries();
+    document.addEventListener('DOMContentLoaded', displayEntries);
 });
