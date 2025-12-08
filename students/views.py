@@ -5,25 +5,12 @@ from django.contrib.auth.hashers import make_password, check_password
 from .forms import StudentSignUpForm, StudentLoginForm, AdminRegistrationForm
 from .supabase_client import supabase  # make sure you have supabase_client.py configured
 from django.contrib.auth.decorators import login_required
-from django.contrib.admin.views.decorators import staff_member_required
-from httpx import ConnectError
+from .models import Post, Like, Comment, Student, Journal, Resource
+from .forms import PostForm 
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
-from django.views.generic import UpdateView
-from django.db.models import Q, Count
-from django.utils import timezone
+from django.shortcuts import get_object_or_404
 import json
-from datetime import datetime
-import os
-import base64
-from io import BytesIO
-try:
-    import pytz
-except ImportError:
-    pytz = None
-try:
-    from dateutil import parser as date_parser
-except ImportError:
-    date_parser = None
 
 # Optional PIL import for image processing
 try:
@@ -363,188 +350,53 @@ def student_dashboard(request):
     
     return render(request, 'students/dashboard.html', {'student': student})
 
-# Feed Page (default landing after login)
-def feed_view(request):
-    student = request.session.get('student', None)
-    if not student:
-        return redirect('login')
-    
-    # Fetch full student data including profile picture from database
-    try:
-        response = supabase.table("students").select("id, username, email, full_name, profile_picture_url").eq("id", student['id']).execute()
-        if response.data:
-            student_data = response.data[0]
-            # Update session with latest profile picture
-            student['profile_picture_url'] = student_data.get('profile_picture_url', '')
-            student['full_name'] = student_data.get('full_name', student.get('full_name', ''))
-            request.session['student'] = student
-            request.session.modified = True
-            student = student_data  # Use full data for template
-    except Exception as e:
-        print(f"Error fetching student data for feed: {e}")
-        # Continue with session data if fetch fails
-    
-    # Both admins and regular users can see the feed (approved posts)
-    # Admins can also access the admin dashboard separately
-    admin_flag = is_admin(request)
-    return render(request, 'students/community.html', {'student': student, 'is_admin_flag': admin_flag})
-
-# Community Page (alias to feed)
-def community_view(request):
-    return feed_view(request)
-
-# Resources Page
-def resources_view(request):
-    student = request.session.get('student', None)
-    if not student:
-        return redirect('login')
-    return render(request, 'students/resources.html', {'student': student})
-
 #Student Profile
-# Student Profile
 def student_profile(request):
     student = request.session.get('student', None)
     if not student:
         return redirect('login')
-    admin_flag = is_admin(request)
-    
-    # Fetch full student data from database
-    try:
-        response = supabase.table("students").select("*").eq("id", student['id']).execute()
-        if response.data:
-            student_data = response.data[0]
-            
-            # Convert created_at or date_joined to Philippine timezone (UTC+8)
-            date_field = student_data.get('created_at') or student_data.get('date_joined')
-            print(f"DEBUG: date_field value: {date_field}")  # Debug output
-            if date_field:
-                try:
-                    # Parse the datetime string from Supabase (ISO format)
-                    if isinstance(date_field, str):
-                        # Try using dateutil parser if available
-                        if date_parser:
-                            dt = date_parser.parse(date_field)
-                        else:
-                            # Simple ISO format parsing (Python 3.7+)
-                            try:
-                                dt = datetime.fromisoformat(date_field.replace('Z', '+00:00'))
-                            except:
-                                # Fallback: basic string parsing
-                                from datetime import datetime
-                                dt = datetime.strptime(date_field[:19], '%Y-%m-%dT%H:%M:%S')
-                    else:
-                        dt = date_field
-                    
-                    # Convert to Philippine timezone (UTC+8)
-                    if pytz:
-                        ph_tz = pytz.timezone('Asia/Manila')
-                        if dt.tzinfo is None:
-                            # If naive datetime, assume it's UTC
-                            dt = pytz.UTC.localize(dt)
-                        ph_dt = dt.astimezone(ph_tz)
-                        student_data['date_joined'] = ph_dt
-                    else:
-                        # Fallback: manually add 8 hours for Philippine time
-                        from datetime import timedelta
-                        if dt.tzinfo is None:
-                            # Assume UTC and add 8 hours
-                            ph_dt = dt + timedelta(hours=8)
-                        else:
-                            ph_dt = dt + timedelta(hours=8)
-                        student_data['date_joined'] = ph_dt
-                except Exception as e:
-                    print(f"Error converting date to Philippine timezone: {e}")
-                    # If conversion fails, try to use the original date as-is
-                    student_data['date_joined'] = date_field
-            else:
-                # If no date field exists, set date_joined to None
-                student_data['date_joined'] = None
-            
-            return render(request, 'students/profile.html', {'student': student_data, 'is_admin_flag': admin_flag})
-    except Exception as e:
-        print(f"Error fetching student profile: {e}")
-    
-    # Fallback: If database fetch failed, try to get date from session or set to None
-    if student and not student.get('date_joined') and not student.get('created_at'):
-        student['date_joined'] = None
-    
-    return render(request, 'students/profile.html', {'student': student, 'is_admin_flag': admin_flag})
+    return render(request, 'students/profile.html', {'student': student})
 
-# Edit Profile
-def profile_edit(request):
-    student = request.session.get('student', None)
-    if not student:
+#About Us
+def about_us(request):
+    return render(request, 'students/about_us.html')
+
+
+
+def feed_view(request):
+    student_session = request.session.get('student')
+    if not student_session:
+        messages.error(request, "Please login first.")
         return redirect('login')
-    admin_flag = is_admin(request)
-    
-    # Fetch full student data from database
-    profile = None
-    try:
-        response = supabase.table("students").select("*").eq("id", student['id']).execute()
-        if response.data:
-            profile = response.data[0]
-            # Update session with latest data (especially profile_picture_url)
-            request.session['student'] = {
-                'id': profile['id'],
-                'username': profile.get('username', student.get('username')),
-                'email': profile.get('email', student.get('email')),
-                'full_name': profile.get('full_name', student.get('full_name', '')),
-                'profile_picture_url': profile.get('profile_picture_url', student.get('profile_picture_url'))
-            }
-            request.session.modified = True
-    except Exception as e:
-        print(f"Error fetching profile data: {e}")
-        pass
-    
-    # If no profile data found, use session data
-    if not profile:
-        profile = student
-    
-    return render(request, 'students/profile_edit.html', {
-        'student': student,
-        'profile': profile,
-        'is_admin_flag': admin_flag
-    })
 
-# Change Password
-def change_password(request):
-    if request.method != 'POST':
-        return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=405)
-    
-    student = request.session.get('student', None)
-    if not student:
-        return JsonResponse({'success': False, 'error': 'Not authenticated'}, status=401)
-    
-    try:
-        data = json.loads(request.body)
-        current_password = data.get('current_password')
-        new_password = data.get('new_password')
-        confirm_password = data.get('confirm_password')
-        
-        if not all([current_password, new_password, confirm_password]):
-            return JsonResponse({'success': False, 'error': 'All fields are required'}, status=400)
-        
-        if new_password != confirm_password:
-            return JsonResponse({'success': False, 'error': 'New passwords do not match'}, status=400)
-        
-        if len(new_password) < 6:
-            return JsonResponse({'success': False, 'error': 'Password must be at least 6 characters'}, status=400)
-        
-        # Verify current password
-        response = supabase.table("students").select("*").eq("id", student['id']).execute()
-        if not response.data:
-            return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
-        
-        student_data = response.data[0]
-        if not check_password(current_password, student_data['password']):
-            return JsonResponse({'success': False, 'error': 'Current password is incorrect'}, status=400)
-        
-        # Update password in Supabase
-        hashed_password = make_password(new_password)
-        update_response = supabase.table("students").update({"password": hashed_password}).eq("id", student['id']).execute()
-        
-        if update_response.data:
-            return JsonResponse({'success': True, 'message': 'Password updated successfully'})
+    # map session -> local Django Student (get or create)
+    def get_or_create_local_student(sess):
+        email = sess.get('email')
+        username = sess.get('username') or (email.split('@')[0] if email else None)
+        full_name = sess.get('full_name') or username
+        if not email and not username:
+            return None
+        student_obj, created = Student.objects.get_or_create(
+            email=email,
+            defaults={'username': username, 'full_name': full_name}
+        )
+        return student_obj
+
+    local_student = get_or_create_local_student(student_session)
+
+    if request.method == 'POST':
+        form = PostForm(request.POST)
+        if form.is_valid():
+            new_post = form.save(commit=False)
+            # assign local Student instance (not supabase id)
+            new_post.student = local_student
+            # enforce anonymous if no local_student found
+            if local_student is None:
+                new_post.is_anonymous = True
+            new_post.save()
+
+            messages.success(request, "Post created!")
+            return redirect('feed')
         else:
             return JsonResponse({'success': False, 'error': 'Failed to update password'}, status=500)
             
@@ -1749,3 +1601,201 @@ def admin_delete_user(request, user_id):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
+def delete_post(request, post_id):
+    if request.method != 'POST':
+        return redirect('feed')
+
+    from .models import Post
+    post = get_object_or_404(Post, pk=post_id)
+
+    session_student_id = _get_session_student_id(request)
+    if not post.student or post.student.id != session_student_id:
+        messages.error(request, "You don't have permission to delete this post.")
+        return redirect('feed')
+
+    post.delete()
+    messages.success(request, "Post deleted.")
+    return redirect('feed')
+
+def resources_hub(request):
+    query = request.GET.get('q', '').strip()
+    category = request.GET.get('category', '')
+
+    resources = Resource.objects.all()
+
+    if query:
+        resources = resources.filter(title__icontains=query)
+
+    if category:
+        resources = resources.filter(category__icontains=category)
+
+    return render(request, 'students/resources_hub.html', {
+        'resources': resources,
+        'query': query,
+        'category': category,
+    })
+
+def create_journal(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            student_id = data.get('student_id')
+            title = data.get('title', 'Reflective Journal')
+            content = data.get('content')
+
+            if not content:
+                return JsonResponse({'success': False, 'error': 'Content is required.'})
+
+            journal = Journal.objects.create(
+                student_id_id=student_id,  # if ForeignKey
+                title=title,
+                content=content
+            )
+            return JsonResponse({'success': True, 'entry': {'id': journal.id, 'title': journal.title, 'content': journal.content}})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method.'})
+
+def save_journal_entry(request):
+    if request.method == 'POST':
+        student_session = request.session.get('student')
+        if not student_session:
+            return JsonResponse({'success': False, 'error': 'Not logged in'}, status=401)
+
+        # Get or create local Django Student from session
+        email = student_session.get('email')
+        username = student_session.get('username') or (email.split('@')[0] if email else None)
+        full_name = student_session.get('full_name') or username
+
+        try:
+            student_obj, _ = Student.objects.get_or_create(
+                email=email,
+                defaults={'username': username, 'full_name': full_name}
+            )
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+        try:
+            data = json.loads(request.body)
+            content = data.get('content', '').strip()
+            title = data.get('title', 'Reflective Journal').strip() or 'Reflective Journal'
+
+            if not content:
+                return JsonResponse({'success': False, 'error': 'Content cannot be empty'}, status=400)
+
+            journal = Journal.objects.create(
+                student_id=student_obj,
+                title=title,
+                content=content
+            )
+
+            return JsonResponse({
+                'success': True,
+                'id': journal.id,
+                'title': journal.title,
+                'content': journal.content,
+                'created_at': journal.created_at.isoformat()
+            })
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
+
+
+def journal_entries_view(request):
+    student_session = request.session.get('student')
+    if not student_session:
+        return redirect('login')
+
+    email = student_session.get('email')
+    if not email:
+        messages.error(request, "Invalid session.")
+        return redirect('login')
+
+    try:
+        student_obj = Student.objects.get(email=email)
+    except Student.DoesNotExist:
+        messages.error(request, "Student not found.")
+        return redirect('login')
+
+    journals_qs = Journal.objects.filter(student_id=student_obj).order_by('-created_at')
+
+    # Convert to list of dicts
+    journals_data = [
+        {
+            'id': j.id,
+            'title': j.title or 'Journal Entry',
+            'content': j.content,
+            'created_at': j.created_at.isoformat() if j.created_at else ''
+        }
+        for j in journals_qs
+    ]
+
+    print(f"DEBUG: journals_data = {journals_data}")
+
+    context = {
+        'student': student_session,
+        'journals': json.dumps(journals_data),  # Must be JSON string
+    }
+    return render(request, 'students/journal_entries.html', context)
+
+
+def edit_journal_entry(request, journal_id):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid method'}, status=400)
+
+    student_session = request.session.get('student')
+    if not student_session:
+        return JsonResponse({'success': False, 'error': 'Not logged in'}, status=401)
+
+    try:
+        email = student_session.get('email')
+        student_obj = Student.objects.get(email=email)
+    except Student.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Student not found'}, status=404)
+
+    journal = get_object_or_404(Journal, id=journal_id)
+    if journal.student_id != student_obj:
+        return JsonResponse({'success': False, 'error': 'Not authorized'}, status=403)
+
+    try:
+        data = json.loads(request.body)
+        title = (data.get('title') or '').strip()
+        content = (data.get('content') or '').strip()
+        if not content:
+            return JsonResponse({'success': False, 'error': 'Content cannot be empty'})
+        journal.content = content
+        if title != '':
+            journal.title = title
+        journal.save()
+        return JsonResponse({'success': True, 'id': journal.id, 'title': journal.title, 'content': journal.content})
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+def delete_journal_entry(request, journal_id):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Invalid request'}, status=400)
+
+    student_session = request.session.get('student')
+    if not student_session:
+        return JsonResponse({'error': 'Not logged in'}, status=401)
+
+    try:
+        email = student_session.get('email')
+        student_obj = Student.objects.get(email=email)
+    except Student.DoesNotExist:
+        return JsonResponse({'error': 'Student not found'}, status=404)
+
+    journal = get_object_or_404(Journal, id=journal_id)
+
+    if journal.student_id != student_obj:
+        return JsonResponse({'error': 'Not authorized'}, status=403)
+
+    journal.delete()
+    return JsonResponse({'success': True})

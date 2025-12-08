@@ -1,21 +1,37 @@
 {% extends 'students/base_user.html' %}
 {% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MentalEase - My Journal Entries</title>
+    <link rel="stylesheet" href="{% static 'students/css/journal_entries.css' %}">
+</head>
+<body>
+    
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <a href="{% url 'dashboard' %}" class="navbar-logo">MentalEase</a>
+        <div class="navbar-links">
+            <a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a>
+            <a href="{% url 'about_us' %}" class="nav-link">About Us</a>
+        </div>
+        <div class="profile-dropdown-container">
+            <div id="profilePic" class="profile-pic">{{ student.username|slice:":1"|upper }}</div>
+            <div id="profileDropdown" class="dropdown-menu">
+                <a href="{% url 'profile_page' %}" class="dropdown-item">My Profile</a>
+                <a href="{% url 'logout' %}" class="dropdown-item">Logout</a>
+            </div>
+        </div>
+    </nav>
 
-{% block title %}My Journal Entries - MentalEase{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'students/css/journal_entries.css' %}">
-{% endblock %}
-
-{% block content %}
     <!-- Page Container with dashboard-style background -->
-    <div class="gradient-background"></div>
-    <div class="mental-health-cover"></div>
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="orb orb-3"></div>
-
     <div class="page-container">
+        <div class="gradient-background"></div>
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
 
         <div class="form-card">
             <header class="header">
@@ -24,7 +40,6 @@
 
             <!-- Action Bar -->
             <div class="action-bar">
-                <a href="{% url 'dashboard' %}" class="journal-action-btn">Back to Dashboard</a>
                 <div class="entry-count">
                     <span id="totalEntries">{{ journals|length }}</span> Total Entries
                 </div>
@@ -44,6 +59,23 @@
                 <div class="empty-state" id="emptyState" {% if journals %}style="display:none;"{% endif %}>
                     <h3>No Journal Entries Yet</h3>
                 </div>
+
+                <!-- Table view for journal entries -->
+                <div class="table-wrapper" {% if journals %}style="display: block;"{% else %}style="display: none;"{% endif %}>
+                    <table class="journal-table" id="entriesTable">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Content</th>
+                                <th>Created At</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="entriesTbody">
+                            <!-- rows rendered by JS -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -56,11 +88,9 @@
                 <button id="closeEditModal" class="close-button">&times;</button>
             </div>
             <form id="editForm">
-                <textarea id="editTextarea" rows="10" class="form-input" placeholder="Edit your journal entry..."></textarea>
-                <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
-                    <button type="button" id="cancelEditBtn" class="journal-action-btn" style="flex: 1; background: #6b7280;">Cancel</button>
-                    <button type="submit" class="journal-action-btn" style="flex: 1;">Save Changes</button>
-                </div>
+                <textarea id="editTextarea" rows="8" class="form-input"></textarea>
+                <button type="button" id="cancelEditBtn" class="journal-action-btn">Cancel</button>
+                <button type="submit" class="journal-action-btn">Save Changes</button>
             </form>
         </div>
     </div>
@@ -72,17 +102,27 @@
                 <h3>Delete Entry?</h3>
                 <button id="closeDeleteModal" class="close-button">&times;</button>
             </div>
-            <p style="margin-bottom: 1.5rem; color: #6b7280;">Are you sure you want to delete this journal entry? This action cannot be undone.</p>
-            <div style="display: flex; gap: 0.75rem;">
-                <button id="cancelDeleteBtn" class="journal-action-btn" style="flex: 1; background: #6b7280;">Cancel</button>
-                <button id="confirmDeleteBtn" class="journal-action-btn" style="flex: 1; background: #dc2626;">Delete</button>
-            </div>
+            <p>Are you sure you want to delete this journal entry? This action cannot be undone.</p>
+            <button id="cancelDeleteBtn" class="journal-action-btn">Cancel</button>
+            <button id="confirmDeleteBtn" class="journal-action-btn">Delete</button>
         </div>
     </div>
 
-{% endblock %}
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
+    <script>
+    const supabaseUrl = 'https://YOUR_SUPABASE_PROJECT_URL';
+    const supabaseKey = 'YOUR_SUPABASE_ANON_KEY';
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+    </script>
 
-{% block extra_js %}
-<!-- Your custom JS -->
-<script src="{% static 'students/js/journal_entries.js' %}"></script>
-{% endblock %}
+    <!-- Pass current student ID from Django to JS -->
+    <script>
+    const CURRENT_STUDENT_ID = "{{ student.id }}";
+    </script>
+
+    <!-- Your custom JS -->
+    <script src="{% static 'students/js/journal_entries.js' %}"></script>
+
+</body>
+</html>

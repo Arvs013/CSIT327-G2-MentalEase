@@ -2,7 +2,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('', views.home_view, name='home'),
+    # Authentication URLs & Dashboard URLs
     path('signup/', views.signup_view, name='signup'),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
@@ -12,14 +12,14 @@ urlpatterns = [
     path('api/update-profile/', views.update_profile, name='update_profile'),
     path('api/change-password/', views.change_password, name='change_password'),
     path('about-us/', views.about_us, name='about_us'),
-    path('journal-entries/', views.journal_entries, name='journal_entries'),
     
-    # Journal API URLs
-    path('api/journals/', views.get_journals, name='api_get_journals'),
-    path('api/journals/create/', views.create_journal, name='api_create_journal'),
-    path('api/journals/<int:journal_id>/update/', views.update_journal, name='api_update_journal'),
-    path('api/journals/<int:journal_id>/delete/', views.delete_journal, name='api_delete_journal'),
-
+    # Journal URLs
+    path('dashboard/save_journal/', views.save_journal_entry, name='save_journal'),
+    path('journal_entries/', views.journal_entries_view, name='journal_entries'),
+    path('journal/<int:journal_id>/edit/', views.edit_journal_entry, name='edit_journal'),
+    path('journal/<int:journal_id>/delete/', views.delete_journal_entry, name='delete_journal'),
+    
+    
     # Feed URLs
     path('feed/', views.feed_view, name='feed'),
     path('api/posts/', views.get_anonymous_posts, name='api_get_posts'),
