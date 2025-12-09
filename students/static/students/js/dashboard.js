@@ -1,11 +1,19 @@
-// ===== Initialize after window loads to ensure Supabase is ready =====
-window.addEventListener('load', function () {
-    if (!window.supabase) {
-    console.error('Supabase not initialized!');
-}
+// ===== Initialize after DOM is ready =====
+(function() {
+    'use strict';
+    
+    console.log('Dashboard.js script loaded');
+    
+    // Wait for DOM to be ready
+    function init() {
+        console.log('Initializing dashboard.js');
+        
+        if (!window.supabase) {
+            console.warn('Supabase not initialized! Some features may not work.');
+        }
 
-    const supabase = window.supabase;
-    const CURRENT_STUDENT_ID = window.CURRENT_STUDENT_ID;
+        const supabase = window.supabase;
+        const CURRENT_STUDENT_ID = window.CURRENT_STUDENT_ID;
 
     // ===== Profile Dropdown =====
     const profilePic = document.getElementById('profilePic');
@@ -46,6 +54,103 @@ window.addEventListener('load', function () {
     const journalTitleInput = document.getElementById('journalTitle');
     const journalTextarea = document.getElementById('journalTextarea');
     const journalMessage = document.getElementById('journalMessage');
+    
+    // ===== Floating Notification System =====
+    function showFloatingNotification(message, type = 'success') {
+        // Remove existing notification if any
+        const existing = document.querySelector('.floating-notification');
+        if (existing) {
+            existing.remove();
+        }
+        
+        const notification = document.createElement('div');
+        notification.className = 'floating-notification';
+        notification.setAttribute('data-type', type);
+        
+        const icon = type === 'success' ? '✓' : '✕';
+        const bgColor = type === 'success' 
+            ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' 
+            : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+        
+        notification.innerHTML = `
+            <div class="notification-content">
+                <span class="notification-icon">${icon}</span>
+                <span class="notification-message">${message}</span>
+            </div>
+        `;
+        
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${bgColor};
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            z-index: 10000;
+            font-weight: 600;
+            font-size: 0.95rem;
+            min-width: 250px;
+            animation: slideInNotification 0.3s ease-out;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto remove after 4 seconds with fade out
+        setTimeout(() => {
+            notification.style.animation = 'slideOutNotification 0.3s ease-out';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 300);
+        }, 4000);
+    }
+    
+    // Add notification animations
+    if (!document.getElementById('notification-styles')) {
+        const style = document.createElement('style');
+        style.id = 'notification-styles';
+        style.textContent = `
+            @keyframes slideInNotification {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes slideOutNotification {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+            .notification-content {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+            }
+            .notification-icon {
+                font-size: 1.25rem;
+                font-weight: 700;
+            }
+            .notification-message {
+                flex: 1;
+            }
+        `;
+        document.head.appendChild(style);
+    }
 
     let currentEditId = null;
     let currentDeleteId = null;
@@ -54,16 +159,18 @@ window.addEventListener('load', function () {
 
     // ===== Display Entries =====
     function displayEntries() {
+        if (!entriesContainer) return;
+        
         entriesContainer.innerHTML = '';
 
         if (!filteredEntries.length) {
-            emptyState.style.display = 'block';
-            totalEntriesSpan.textContent = '0';
+            if (emptyState) emptyState.style.display = 'block';
+            if (totalEntriesSpan) totalEntriesSpan.textContent = '0';
             return;
         }
 
-        emptyState.style.display = 'none';
-        totalEntriesSpan.textContent = filteredEntries.length;
+        if (emptyState) emptyState.style.display = 'none';
+        if (totalEntriesSpan) totalEntriesSpan.textContent = filteredEntries.length;
 
         filteredEntries.forEach(entry => {
             const card = document.createElement('div');
@@ -96,6 +203,8 @@ window.addEventListener('load', function () {
 
     // ===== Search & Sort =====
     function filterAndSort() {
+        if (!searchInput || !sortSelect || !entriesContainer) return;
+        
         const searchTerm = searchInput.value.toLowerCase();
 
         filteredEntries = journalEntries.filter(e =>
@@ -112,24 +221,43 @@ window.addEventListener('load', function () {
         displayEntries();
     }
 
-    searchInput.addEventListener('input', filterAndSort);
-    sortSelect.addEventListener('change', filterAndSort);
+    if (searchInput) {
+        searchInput.addEventListener('input', filterAndSort);
+    }
+    if (sortSelect) {
+        sortSelect.addEventListener('change', filterAndSort);
+    }
 
     // ===== Load Entries =====
     async function loadEntries() {
-        if (!CURRENT_STUDENT_ID) return console.error('Student ID not defined');
+        if (!entriesContainer) return; // Only load if on journal entries page
+        if (!CURRENT_STUDENT_ID) {
+            console.error('Student ID not defined');
+            return;
+        }
+        if (!supabase) {
+            console.error('Supabase not initialized');
+            return;
+        }
 
-        const { data, error } = await supabase
-            .from('journals')
-            .select('*')
-            .eq('student_id', CURRENT_STUDENT_ID)
-            .order('created_at', { ascending: false });
+        try {
+            const { data, error } = await supabase
+                .from('journals')
+                .select('*')
+                .eq('student_id', CURRENT_STUDENT_ID)
+                .order('created_at', { ascending: false });
 
-        if (error) return console.error(error);
+            if (error) {
+                console.error('Error loading entries:', error);
+                return;
+            }
 
-        journalEntries = data || [];
-        filteredEntries = [...journalEntries];
-        filterAndSort();
+            journalEntries = data || [];
+            filteredEntries = [...journalEntries];
+            filterAndSort();
+        } catch (err) {
+            console.error('Error in loadEntries:', err);
+        }
     }
 
     // ===== Helper function to get CSRF token =====
@@ -149,133 +277,384 @@ window.addEventListener('load', function () {
     }
 
     // ===== Save Journal Entry =====
-    saveJournalBtn.addEventListener('click', async () => {
-        const content = journalTextarea.value.trim();
-        if (!content) {
-            journalMessage.textContent = 'Cannot save empty journal entry';
-            journalMessage.style.display = 'block';
-            journalMessage.style.color = '#dc2626';
-            journalMessage.style.background = '#fef2f2';
-            journalMessage.style.border = '1px solid #fecaca';
-            return;
-        }
+    if (saveJournalBtn && journalTextarea) {
+        console.log('Save journal button found, attaching event listener');
+        saveJournalBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            console.log('Save button clicked');
+            
+            const content = journalTextarea.value.trim();
+            console.log('Content:', content);
+            
+            if (!content) {
+                showFloatingNotification('Cannot save empty journal entry', 'error');
+                return;
+            }
 
-        try {
-            const response = await fetch('/api/journals/create/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
-                },
-                body: JSON.stringify({
+            // Disable button and show loading state
+            saveJournalBtn.disabled = true;
+            const originalText = saveJournalBtn.innerHTML;
+            saveJournalBtn.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
+                    <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/>
+                </svg>
+                Saving...
+            `;
+            saveJournalBtn.style.opacity = '0.7';
+            saveJournalBtn.style.cursor = 'not-allowed';
+
+            try {
+                const csrfToken = getCookie('csrftoken');
+                console.log('CSRF Token:', csrfToken ? 'Found' : 'Not found');
+                
+                const requestBody = {
                     content: content,
                     title: 'Journal Reflection'
-                })
-            });
+                };
+                console.log('Request body:', requestBody);
+                
+                const response = await fetch('/students/api/journals/create/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify(requestBody)
+                });
 
-            const data = await response.json();
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                console.log('Response data:', data);
 
-            if (data.success) {
-                journalMessage.textContent = 'Reflection saved successfully!';
-                journalMessage.style.display = 'block';
-                journalMessage.style.color = '#166534';
-                journalMessage.style.background = '#f0fdf4';
-                journalMessage.style.border = '1px solid #bbf7d0';
-                journalTextarea.value = '';
-
-                // Clear message after 3 seconds
-                setTimeout(() => {
-                    journalMessage.style.display = 'none';
-                }, 3000);
-            } else {
-                journalMessage.textContent = 'Failed to save entry: ' + (data.error || 'Unknown error');
-                journalMessage.style.display = 'block';
-                journalMessage.style.color = '#dc2626';
-                journalMessage.style.background = '#fef2f2';
-                journalMessage.style.border = '1px solid #fecaca';
+                if (data.success) {
+                    // Clear textarea
+                    journalTextarea.value = '';
+                    
+                    // Show success notification
+                    showFloatingNotification('Journal entry saved successfully!', 'success');
+                    
+                    // Reset button
+                    saveJournalBtn.disabled = false;
+                    saveJournalBtn.innerHTML = originalText;
+                    saveJournalBtn.style.opacity = '1';
+                    saveJournalBtn.style.cursor = 'pointer';
+                } else {
+                    // Show error notification
+                    const errorMsg = data.error || 'Unknown error';
+                    console.error('Save failed:', errorMsg);
+                    showFloatingNotification('Failed to save: ' + errorMsg, 'error');
+                    
+                    // Reset button
+                    saveJournalBtn.disabled = false;
+                    saveJournalBtn.innerHTML = originalText;
+                    saveJournalBtn.style.opacity = '1';
+                    saveJournalBtn.style.cursor = 'pointer';
+                }
+            } catch (error) {
+                console.error('Error saving journal:', error);
+                showFloatingNotification('Failed to save entry: ' + error.message, 'error');
+                
+                // Reset button
+                saveJournalBtn.disabled = false;
+                saveJournalBtn.innerHTML = originalText;
+                saveJournalBtn.style.opacity = '1';
+                saveJournalBtn.style.cursor = 'pointer';
             }
-        } catch (error) {
-            journalMessage.textContent = 'Failed to save entry: ' + error.message;
-            journalMessage.style.display = 'block';
-            journalMessage.style.color = '#dc2626';
-            journalMessage.style.background = '#fef2f2';
-            journalMessage.style.border = '1px solid #fecaca';
-            console.error('Error saving journal:', error);
-        }
-    });
+        });
+    } else {
+        console.error('Save journal button or textarea not found!', {
+            saveJournalBtn: !!saveJournalBtn,
+            journalTextarea: !!journalTextarea
+        });
+    }
 
     // ===== Edit Journal Entry =====
     function openEditModal(id) {
+        if (!editModal || !editTitleInput || !editContentTextarea) return;
         currentEditId = id;
         const entry = journalEntries.find(e => e.id == id);
         if (!entry) return;
 
-        editTitleInput.value = entry.title;
-        editContentTextarea.value = entry.content;
+        editTitleInput.value = entry.title || '';
+        editContentTextarea.value = entry.content || '';
         editModal.style.display = 'block';
     }
 
     function closeEditModalFunc() {
+        if (!editModal) return;
         editModal.style.display = 'none';
         currentEditId = null;
     }
 
-    closeEditModal.addEventListener('click', closeEditModalFunc);
-    cancelEditBtn.addEventListener('click', closeEditModalFunc);
+    // Only attach modal event listeners if elements exist (journal entries page)
+    if (closeEditModal) {
+        closeEditModal.addEventListener('click', closeEditModalFunc);
+    }
+    if (cancelEditBtn) {
+        cancelEditBtn.addEventListener('click', closeEditModalFunc);
+    }
 
-    editForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        if (!currentEditId) return;
+    if (editForm && editTitleInput && editContentTextarea) {
+        editForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentEditId || !supabase) return;
 
-        const updatedTitle = editTitleInput.value.trim() || 'New Entry';
-        const updatedContent = editContentTextarea.value.trim();
-        if (!updatedContent) return alert('Text cannot be empty');
+            const updatedTitle = editTitleInput.value.trim() || 'New Entry';
+            const updatedContent = editContentTextarea.value.trim();
+            if (!updatedContent) return alert('Text cannot be empty');
 
-        const { data, error } = await supabase
-            .from('journals')
-            .update({ title: updatedTitle, content: updatedContent })
-            .eq('id', currentEditId)
-            .select()
-            .single();
+            try {
+                const { data, error } = await supabase
+                    .from('journals')
+                    .update({ title: updatedTitle, content: updatedContent })
+                    .eq('id', currentEditId)
+                    .select()
+                    .single();
 
-        if (error) return alert('Failed to update entry: ' + error.message);
+                if (error) return alert('Failed to update entry: ' + error.message);
 
-        const index = journalEntries.findIndex(e => e.id == currentEditId);
-        if (index > -1) journalEntries[index] = data;
+                const index = journalEntries.findIndex(e => e.id == currentEditId);
+                if (index > -1) journalEntries[index] = data;
 
-        filterAndSort();
-        closeEditModalFunc();
-    });
+                filterAndSort();
+                closeEditModalFunc();
+            } catch (err) {
+                console.error('Error updating entry:', err);
+                alert('Failed to update entry');
+            }
+        });
+    }
 
     // ===== Delete Journal Entry =====
     function openDeleteModal(id) {
+        if (!deleteModal) return;
         currentDeleteId = id;
         deleteModal.style.display = 'block';
     }
 
     function closeDeleteModalFunc() {
+        if (!deleteModal) return;
         deleteModal.style.display = 'none';
         currentDeleteId = null;
     }
 
-    closeDeleteModal.addEventListener('click', closeDeleteModalFunc);
-    cancelDeleteBtn.addEventListener('click', closeDeleteModalFunc);
+    if (closeDeleteModal) {
+        closeDeleteModal.addEventListener('click', closeDeleteModalFunc);
+    }
+    if (cancelDeleteBtn) {
+        cancelDeleteBtn.addEventListener('click', closeDeleteModalFunc);
+    }
 
-    confirmDeleteBtn.addEventListener('click', async () => {
-        if (!currentDeleteId) return;
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener('click', async () => {
+            if (!currentDeleteId || !supabase) return;
 
-        const { error } = await supabase
-            .from('journals')
-            .delete()
-            .eq('id', currentDeleteId);
+            try {
+                const { error } = await supabase
+                    .from('journals')
+                    .delete()
+                    .eq('id', currentDeleteId);
 
-        if (error) return alert('Failed to delete entry: ' + error.message);
+                if (error) return alert('Failed to delete entry: ' + error.message);
 
-        journalEntries = journalEntries.filter(e => e.id != currentDeleteId);
-        filterAndSort();
-        closeDeleteModalFunc();
-    });
+                journalEntries = journalEntries.filter(e => e.id != currentDeleteId);
+                filterAndSort();
+                closeDeleteModalFunc();
+            } catch (err) {
+                console.error('Error deleting entry:', err);
+                alert('Failed to delete entry');
+            }
+        });
+    }
 
     // ===== Initialize =====
-    loadEntries();
-});
+    // Only initialize journal entries functionality if on journal entries page
+    if (entriesContainer) {
+        loadEntries();
+    }
+    
+    // Only attach journal entry buttons if elements exist
+    if (document.querySelectorAll('.edit-btn').length > 0) {
+        document.querySelectorAll('.edit-btn').forEach(btn =>
+            btn.addEventListener('click', () => openEditModal(btn.dataset.id))
+        );
+        document.querySelectorAll('.delete-btn').forEach(btn =>
+            btn.addEventListener('click', () => openDeleteModal(btn.dataset.id))
+        );
+    }
+    } // End of init function
+    
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        // DOM is already ready
+        init();
+    }
+})();
+
+// ===== Standalone Save Journal Entry Handler (works independently) =====
+(function() {
+    'use strict';
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    function showFloatingNotification(message, type = 'success') {
+        const existing = document.querySelector('.floating-notification');
+        if (existing) existing.remove();
+        
+        const notification = document.createElement('div');
+        notification.className = 'floating-notification';
+        notification.setAttribute('data-type', type);
+        
+        const icon = type === 'success' ? '✓' : '✕';
+        const bgColor = type === 'success' 
+            ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' 
+            : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+        
+        notification.innerHTML = `
+            <div class="notification-content">
+                <span class="notification-icon">${icon}</span>
+                <span class="notification-message">${message}</span>
+            </div>
+        `;
+        
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${bgColor};
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            z-index: 10000;
+            font-weight: 600;
+            font-size: 0.95rem;
+            min-width: 250px;
+            animation: slideInNotification 0.3s ease-out;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.animation = 'slideOutNotification 0.3s ease-out';
+            setTimeout(() => {
+                if (notification.parentNode) notification.remove();
+            }, 300);
+        }, 4000);
+    }
+    
+    function initSaveButton() {
+        const saveBtn = document.getElementById('saveJournalBtn');
+        const textarea = document.getElementById('journalTextarea');
+        
+        if (!saveBtn) {
+            console.error('Save button not found!');
+            return;
+        }
+        
+        if (!textarea) {
+            console.error('Journal textarea not found!');
+            return;
+        }
+        
+        console.log('Save button and textarea found, attaching listener');
+        
+        saveBtn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            console.log('Save button clicked!');
+            
+            const content = textarea.value.trim();
+            
+            if (!content) {
+                showFloatingNotification('Cannot save empty journal entry', 'error');
+                return;
+            }
+            
+            // Disable button
+            saveBtn.disabled = true;
+            const originalText = saveBtn.innerHTML;
+            saveBtn.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
+                    <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/>
+                </svg>
+                Saving...
+            `;
+            saveBtn.style.opacity = '0.7';
+            saveBtn.style.cursor = 'not-allowed';
+            
+            try {
+                const csrfToken = getCookie('csrftoken');
+                console.log('CSRF Token:', csrfToken ? 'Found' : 'Missing');
+                
+                const response = await fetch('/students/api/journals/create/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken || ''
+                    },
+                    body: JSON.stringify({
+                        content: content,
+                        title: 'Journal Reflection'
+                    })
+                });
+                
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                if (data.success) {
+                    textarea.value = '';
+                    showFloatingNotification('Journal entry saved successfully!', 'success');
+                } else {
+                    showFloatingNotification('Failed to save: ' + (data.error || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                console.error('Error saving journal:', error);
+                showFloatingNotification('Failed to save entry: ' + error.message, 'error');
+            } finally {
+                // Reset button
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalText;
+                saveBtn.style.opacity = '1';
+                saveBtn.style.cursor = 'pointer';
+            }
+        });
+    }
+    
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initSaveButton);
+    } else {
+        initSaveButton();
+    }
+    
+    // Also try after a short delay in case elements load later
+    setTimeout(initSaveButton, 500);
+})();

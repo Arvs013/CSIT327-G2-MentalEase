@@ -19,6 +19,10 @@ urlpatterns = [
     path('api/journals/create/', views.create_journal, name='api_create_journal'),
     path('api/journals/<int:journal_id>/update/', views.update_journal, name='api_update_journal'),
     path('api/journals/<int:journal_id>/delete/', views.delete_journal, name='api_delete_journal'),
+    
+    # Mood API URLs
+    path('api/moods/', views.get_moods, name='api_get_moods'),
+    path('api/moods/save/', views.save_mood, name='api_save_mood'),
 
     # Feed URLs
     path('feed/', views.feed_view, name='feed'),

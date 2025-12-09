@@ -42,23 +42,71 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!dateString) return 'N/A';
         
         try {
-            const date = new Date(dateString);
-            const utcTime = date.getTime() + (date.getTimezoneOffset() * 60 * 1000);
-            const phTime = new Date(utcTime + (8 * 60 * 60 * 1000));
+            // Parse the date string
+            let date;
             
-            const month = String(phTime.getMonth() + 1).padStart(2, '0');
-            const day = String(phTime.getDate()).padStart(2, '0');
-            const year = phTime.getFullYear();
-            const hours = phTime.getHours();
-            const minutes = String(phTime.getMinutes()).padStart(2, '0');
-            const seconds = String(phTime.getSeconds()).padStart(2, '0');
+            // Handle different datetime formats from Supabase
+            // Journal entries: datetime.now(timezone.utc).isoformat() -> has timezone (UTC)
+            // Posts/Comments: datetime.now().isoformat() -> no timezone
+            // When no timezone, Supabase stores as UTC, so treat as UTC
+            if (!dateString.endsWith('Z') && !dateString.match(/[+-]\d{2}:\d{2}$/)) {
+                // No timezone info - Supabase stores all timestamps as UTC
+                // Add 'Z' to explicitly mark as UTC before parsing
+                date = new Date(dateString + 'Z');
+            } else {
+                // Has timezone info, parse directly
+                date = new Date(dateString);
+            }
             
-            const ampm = hours >= 12 ? 'PM' : 'AM';
-            const displayHours = hours % 12 || 12;
+            // Check if date is valid
+            if (isNaN(date.getTime())) {
+                console.error('Invalid date:', dateString);
+                return dateString;
+            }
             
-            return `${month}/${day}/${year}, ${displayHours}:${minutes}:${seconds} ${ampm} PHT`;
+            // Use the most reliable method: toLocaleString with Asia/Manila timezone
+            // This correctly handles all timezone conversions
+            const formatter = new Intl.DateTimeFormat('en-US', {
+                timeZone: 'Asia/Manila',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            });
+            
+            // Format the date
+            const formatted = formatter.format(date);
+            
+            // Parse the formatted string: "MM/DD/YYYY, HH:MM:SS AM/PM"
+            const parts = formatted.split(', ');
+            if (parts.length !== 2) {
+                // Fallback parsing
+                const datePart = parts[0].split('/');
+                const timePart = parts[1] ? parts[1].split(' ') : ['00:00:00', 'AM'];
+                const timeComponents = timePart[0].split(':');
+                const period = timePart[1] || 'AM';
+                
+                return `${datePart[0]}/${datePart[1]}/${datePart[2]}, ${timeComponents[0]}:${timeComponents[1]}:${timeComponents[2] || '00'} ${period} PHT`;
+            }
+            
+            const datePart = parts[0].split('/');
+            const timePart = parts[1].split(' ');
+            const timeComponents = timePart[0].split(':');
+            const period = timePart[1].toUpperCase();
+            
+            const month = datePart[0];
+            const day = datePart[1];
+            const year = datePart[2];
+            const hour = timeComponents[0].padStart(2, '0');
+            const minute = timeComponents[1].padStart(2, '0');
+            const second = (timeComponents[2] || '00').padStart(2, '0');
+            
+            return `${month}/${day}/${year}, ${hour}:${minute}:${second} ${period} PHT`;
         } catch (e) {
-            console.error('Error formatting date:', e);
+            console.error('Error formatting date:', e, 'Input:', dateString);
             return dateString;
         }
     }
@@ -261,8 +309,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             const displayName = student.full_name || student.username || 'Unknown User';
                             const profilePic = student.profile_picture_url || '';
                             const initials = displayName.charAt(0).toUpperCase();
-                            const date = new Date(comment.created_at);
-                            const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                            const dateStr = formatPhilippineTime(comment.created_at);
                             
                             commentDiv.innerHTML = `
                                 <div style="flex-shrink: 0;">

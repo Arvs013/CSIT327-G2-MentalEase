@@ -20,31 +20,131 @@ const journalCount = document.getElementById('journalCount');
 const moodCount = document.getElementById('moodCount');
 const streakCount = document.getElementById('streakCount');
 
-function updateStatistics() {
-    const journalEntries = JSON.parse(localStorage.getItem('journalEntries')) || [];
-    const moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
+async function updateStatistics() {
+    try {
+        // Fetch journal count
+        const journalResponse = await fetch('/students/api/journals/');
+        if (journalResponse.ok) {
+            const journalData = await journalResponse.json();
+            if (journalData.success && journalData.journals) {
+                if (journalCount) journalCount.textContent = journalData.journals.length;
+            } else {
+                if (journalCount) journalCount.textContent = '0';
+            }
+        } else {
+            if (journalCount) journalCount.textContent = '0';
+        }
+    } catch (error) {
+        console.error('Error fetching journal count:', error);
+        if (journalCount) journalCount.textContent = '0';
+    }
 
-    if (journalCount) journalCount.textContent = journalEntries.length;
-    if (moodCount) moodCount.textContent = moodHistory.length;
-    if (streakCount) streakCount.textContent = calculateStreak(moodHistory);
+    try {
+        // Fetch mood entries - try both URL patterns
+        let moodResponse = await fetch('/students/api/moods/');
+        if (!moodResponse.ok) {
+            // Try without /students/ prefix
+            moodResponse = await fetch('/api/moods/');
+        }
+        
+        if (moodResponse.ok) {
+            const moodData = await moodResponse.json();
+            console.log('Mood data received:', moodData); // Debug log
+            if (moodData.success && moodData.moods) {
+                const moods = moodData.moods;
+                console.log('Mood entries:', moods); // Debug log
+                if (moodCount) moodCount.textContent = moods.length;
+                
+                // Calculate streak from mood entries
+                if (streakCount) {
+                    const streak = calculateStreak(moods);
+                    console.log('Calculated streak:', streak); // Debug log
+                    streakCount.textContent = streak;
+                }
+            } else {
+                console.log('No moods in response or success=false:', moodData); // Debug log
+                if (moodCount) moodCount.textContent = '0';
+                if (streakCount) streakCount.textContent = '0';
+            }
+        } else {
+            console.error('Mood API response not OK:', moodResponse.status, moodResponse.statusText);
+            if (moodCount) moodCount.textContent = '0';
+            if (streakCount) streakCount.textContent = '0';
+        }
+    } catch (error) {
+        console.error('Error fetching mood count:', error);
+        if (moodCount) moodCount.textContent = '0';
+        if (streakCount) streakCount.textContent = '0';
+    }
 }
 
-function calculateStreak(moodHistory) {
-    if (moodHistory.length === 0) return 0;
-
-    const sorted = [...moodHistory].sort((a, b) => b.timestamp - a.timestamp);
-    let streak = 0;
-    let currentDate = new Date();
-    currentDate.setHours(0, 0, 0, 0);
-
-    for (let entry of sorted) {
-        const entryDate = new Date(entry.timestamp);
-        entryDate.setHours(0, 0, 0, 0);
-        const dayDiff = Math.floor((currentDate - entryDate) / (1000 * 60 * 60 * 24));
-
-        if (dayDiff === streak) streak++;
-        else if (dayDiff > streak) break;
+function calculateStreak(moodEntries) {
+    if (!moodEntries || moodEntries.length === 0) {
+        console.log('No mood entries for streak calculation');
+        return 0;
     }
+
+    // Extract unique dates from mood entries
+    const dates = new Set();
+    moodEntries.forEach(entry => {
+        // Use created_at (Supabase schema) or fallback to date/timestamp
+        const dateStr = entry.created_at || entry.date || entry.timestamp;
+        if (dateStr) {
+            // Extract just the date part (YYYY-MM-DD)
+            let dateOnly = dateStr;
+            if (dateStr.includes('T')) {
+                dateOnly = dateStr.split('T')[0];
+            } else if (dateStr.includes(' ')) {
+                dateOnly = dateStr.split(' ')[0];
+            }
+            // Remove any timezone info
+            dateOnly = dateOnly.split('+')[0].split('Z')[0];
+            dates.add(dateOnly);
+        }
+    });
+
+    console.log('Unique dates extracted:', Array.from(dates)); // Debug log
+
+    if (dates.size === 0) return 0;
+
+    // Convert to Date objects and sort in descending order (most recent first)
+    const dateObjects = Array.from(dates).map(d => {
+        const date = new Date(d + 'T00:00:00');
+        date.setHours(0, 0, 0, 0);
+        return date;
+    }).sort((a, b) => b - a); // Descending order
+    
+    console.log('Sorted date objects:', dateObjects.map(d => d.toISOString().split('T')[0])); // Debug log
+    
+    // Calculate streak - consecutive days starting from today
+    let streak = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Start checking from today, going backwards day by day
+    let checkDate = new Date(today);
+    
+    // Keep checking consecutive days until we find a gap
+    while (true) {
+        // Check if there's an entry for checkDate
+        const hasEntry = dateObjects.some(dateObj => {
+            return dateObj.getTime() === checkDate.getTime();
+        });
+        
+        if (hasEntry) {
+            streak++;
+            // Move to previous day
+            checkDate.setDate(checkDate.getDate() - 1);
+        } else {
+            // No entry for this day, streak ends
+            break;
+        }
+        
+        // Safety check to prevent infinite loop
+        if (streak > 365) break;
+    }
+
+    console.log('Final streak:', streak); // Debug log
     return streak;
 }
 

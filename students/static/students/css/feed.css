@@ -364,9 +364,23 @@ body {
     flex: 1;
 }
 
+.comment-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.25rem;
+}
+
 .comment-content strong {
     color: #1e293b;
     font-size: 0.9rem;
+}
+
+.comment-time {
+    color: #94a3b8;
+    font-size: 0.75rem;
+    white-space: nowrap;
 }
 
 .comment-content p {

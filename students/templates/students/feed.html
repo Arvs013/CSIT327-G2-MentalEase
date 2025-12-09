@@ -107,7 +107,7 @@
                                             {{ post.student.username }}
                                         {% endif %}
                                     </strong>
-                                    <small class="post-time">{{ post.created_at|date:"F d, Y P" }}</small>
+                                    <small class="post-time" data-post-time="{{ post.created_at|date:'Y-m-d\TH:i:s' }}">{{ post.created_at|date:"F d, Y P" }}</small>
                                 </div>
                             </div>
 
@@ -161,13 +161,16 @@
                                             {% endif %}
                                         </div>
                                         <div class="comment-content">
-                                            <strong>
-                                                {% if comment.student and comment.student.username %}
-                                                    {{ comment.student.username }}
-                                                {% else %}
-                                                    Student
-                                                {% endif %}
-                                            </strong>
+                                            <div class="comment-header">
+                                                <strong>
+                                                    {% if comment.student and comment.student.username %}
+                                                        {{ comment.student.username }}
+                                                    {% else %}
+                                                        Student
+                                                    {% endif %}
+                                                </strong>
+                                                <small class="comment-time" data-comment-time="{{ comment.created_at|date:'Y-m-d\TH:i:s' }}">{{ comment.created_at|date:"F d, Y P" }}</small>
+                                            </div>
                                             <p>{{ comment.content }}</p>
                                         </div>
                                     </div>
@@ -218,7 +221,7 @@
                     </svg>
                     <div>
                         <div class="hotline-label">CIT-U Wellness Center:</div>
-                        <a href="tel:123-4567" class="hotline-number">123-4567</a>
+                        <a href="tel:0324112000" class="hotline-number">(032) 411 2000</a>
                     </div>
                 </div>
                 <div class="hotline-item">
@@ -337,6 +340,9 @@
         if (e.target === modal) modal.style.display = 'none';
     });
 });
-    </script> 
+    </script>
+    
+    <!-- Load feed.js for time formatting -->
+    <script src="{% static 'students/js/feed.js' %}"></script>
 </body>
 </html>

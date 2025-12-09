@@ -282,8 +282,29 @@
 
         .resource-list { list-style: none; padding-left: 0; display: flex; flex-direction: column; gap: 0.5rem; }
         .hotline-number { font-weight: 600; color: #1d4ed8; }
-        .resource-link { color: #9333ea; text-decoration: none; font-weight: 500; transition: color 0.2s ease, text-decoration 0.2s ease; display: block; }
-        .resource-link:hover { color: #7e22ce; text-decoration: underline; }
+        .resource-link { 
+            color: #9333ea; 
+            text-decoration: none; 
+            font-weight: 500; 
+            transition: all 0.2s ease; 
+            display: flex; 
+            align-items: center; 
+            gap: 0.5rem; 
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+        }
+        .resource-link:hover { 
+            color: #7e22ce; 
+            background-color: #faf5ff;
+            text-decoration: none;
+        }
+        .resource-icon {
+            flex-shrink: 0;
+            color: #9333ea;
+        }
+        .resource-link:hover .resource-icon {
+            color: #7e22ce;
+        }
 
         /* Mood Logging UI */
         .mood-entry-grid {
@@ -344,7 +365,162 @@
             transform: translateY(-1px);
             box-shadow: 0 4px 8px rgba(147, 51, 234, 0.3);
         }
+
+        /* Mood Feedback Message */
+        .mood-feedback {
+            margin-top: 1rem;
+            padding: 0;
+            font-size: 0.875rem;
+            display: none;
+            animation: slideInMoodFeedback 0.4s ease-out;
+        }
+
+        .mood-feedback.show {
+            display: flex;
+        }
+
+        @keyframes slideInMoodFeedback {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .mood-feedback.success {
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 1.25rem;
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border: 2px solid #22c55e;
+            border-radius: 0.75rem;
+            color: #15803d;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mood-feedback.success::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
+        }
+
+        .mood-feedback.success::after {
+            content: '✓';
+            position: absolute;
+            right: 1rem;
+            font-size: 1.5rem;
+            color: #22c55e;
+            animation: checkmarkPop 0.5s ease-out;
+        }
+
+        @keyframes checkmarkPop {
+            0% {
+                transform: scale(0) rotate(-180deg);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.2) rotate(10deg);
+            }
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        .mood-feedback.error {
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 1.25rem;
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            border: 2px solid #ef4444;
+            border-radius: 0.75rem;
+            color: #dc2626;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mood-feedback.error::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .mood-feedback.error::after {
+            content: '✕';
+            position: absolute;
+            right: 1rem;
+            font-size: 1.5rem;
+            color: #ef4444;
+            animation: errorShake 0.5s ease-out;
+        }
+
+        @keyframes errorShake {
+            0%, 100% {
+                transform: translateX(0);
+            }
+            25% {
+                transform: translateX(-5px);
+            }
+            75% {
+                transform: translateX(5px);
+            }
+        }
+
+        .mood-feedback-icon {
+            font-size: 1.5rem;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
+        .mood-feedback-text {
+            flex: 1;
+            padding-right: 2rem; /* Space for the icon */
+        }
         
+        /* Chart Container */
+        .chart-container {
+            margin: 1.5rem 0;
+            padding: 1.25rem;
+            background: linear-gradient(135deg, #faf5ff 0%, #ffffff 100%);
+            border-radius: 0.75rem;
+            border: 1px solid #e9d5ff;
+            min-height: 280px;
+            position: relative;
+        }
+        
+        .chart-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #9333ea 0%, #7e22ce 100%);
+            border-radius: 0.75rem 0.75rem 0 0;
+        }
+        
+        .chart-container canvas {
+            max-height: 250px;
+            position: relative;
+            z-index: 1;
+        }
+
         /* Chart Placeholder */
         .chart-placeholder {
             height: 200px;
@@ -358,43 +534,236 @@
             font-style: italic;
             margin-top: 1rem;
         }
+
+        /* Mood History Section */
+        .mood-history-section {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 2px solid #f3f4f6;
+        }
+
+        .history-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .history-title::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: linear-gradient(135deg, #9333ea 0%, #7e22ce 100%);
+            border-radius: 2px;
+        }
+
+        .mood-history-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .mood-history-list li {
+            padding: 0.875rem 1rem;
+            background: #ffffff;
+            border-radius: 0.625rem;
+            border: 1px solid #e5e7eb;
+            border-bottom: 3px solid #e9d5ff;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #374151;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .mood-history-list li:hover {
+            transform: translateX(4px);
+            border-bottom-color: #9333ea;
+            box-shadow: 0 2px 4px rgba(147, 51, 234, 0.1);
+            background: #faf5ff;
+        }
+
+        .mood-history-list li:first-child {
+            border-bottom-color: #9333ea;
+            background: linear-gradient(135deg, #faf5ff 0%, #ffffff 100%);
+        }
+
+        .mood-history-entry {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex: 1;
+        }
+
+        .mood-history-date {
+            font-size: 0.85rem;
+            color: #6b7280;
+            font-weight: 500;
+            min-width: 80px;
+        }
+
+        .mood-history-emoji {
+            font-size: 1.5rem;
+            line-height: 1;
+        }
+
+        .mood-history-mood {
+            font-weight: 600;
+            color: #374151;
+            text-transform: capitalize;
+        }
+
+        .mood-history-list li:empty::before {
+            content: "No mood entries yet.";
+            color: #9ca3af;
+            font-style: italic;
+            padding: 1rem;
+            text-align: center;
+            width: 100%;
+        }
         
         /* Journaling UI */
+        /* Journal Card Improvements */
+        .journal-card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .journal-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+            border-radius: 0.75rem 0.75rem 0 0;
+        }
+
         .journal-textarea {
             width: 100%;
-            padding: 0.75rem;
-            min-height: 100px;
-            border: 1px solid #e5e7eb;
-            border-radius: 0.5rem;
+            padding: 1rem;
+            min-height: 150px;
+            border: 2px solid #fde68a;
+            border-radius: 0.75rem;
             resize: vertical;
             font-family: inherit;
-            font-size: 0.9rem;
-            margin-bottom: 1rem;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 1.25rem;
             outline: none;
+            background: #fffbeb;
+            color: #374151;
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
+        
+        .journal-textarea::placeholder {
+            color: #9ca3af;
+            font-style: italic;
+        }
+        
         .journal-textarea:focus {
             border-color: #f59e0b;
-            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1), 0 4px 6px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
         }
+
+        .journal-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
         .journal-action-btn {
-            padding: 0.625rem 1.25rem;
+            padding: 0.75rem 1.5rem;
             background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
             color: white;
             border: none;
-            border-radius: 0.5rem;
+            border-radius: 0.625rem;
             font-weight: 700;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
             box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
         }
+        
         .journal-action-btn:hover { 
             background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+        }
+
+        .journal-action-btn:active {
+            transform: translateY(0);
+        }
+
+        .journal-action-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .view-entries-link {
+            padding: 0.75rem 1.5rem;
+            background: #ffffff;
+            color: #f59e0b;
+            border: 2px solid #fde68a;
+            border-radius: 0.625rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .view-entries-link:hover {
+            background: #fffbeb;
+            border-color: #f59e0b;
+            color: #d97706;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(245, 158, 11, 0.2);
+        }
+
+        .view-entries-link svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .journal-feedback {
+            margin-top: 1rem;
+            padding: 0.875rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: none;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
 

@@ -33,6 +33,48 @@ except ImportError:
     PIL_AVAILABLE = False
     Image = None
 
+# Helper function to calculate mood streak
+def calculate_mood_streak(mood_entries):
+    """Calculate consecutive day streak from mood entries"""
+    if not mood_entries:
+        return 0
+    
+    # Get unique dates (just the date part, not time)
+    dates = set()
+    for entry in mood_entries:
+        # Use created_at instead of date
+        date_str = entry.get('created_at', entry.get('date', ''))
+        if date_str:
+            # Extract just the date part (YYYY-MM-DD)
+            if 'T' in date_str:
+                date_str = date_str.split('T')[0]
+            dates.add(date_str)
+    
+    if not dates:
+        return 0
+    
+    # Sort dates in descending order
+    sorted_dates = sorted(dates, reverse=True)
+    
+    # Calculate streak
+    from datetime import datetime, timedelta
+    streak = 0
+    current_date = datetime.now().date()
+    
+    for date_str in sorted_dates:
+        try:
+            entry_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            days_diff = (current_date - entry_date).days
+            
+            if days_diff == streak:
+                streak += 1
+            elif days_diff > streak:
+                break
+        except:
+            continue
+    
+    return streak
+
 # Helper function to check if Supabase is available
 def check_supabase():
     """Check if Supabase client is available and return error message if not"""
@@ -479,7 +521,35 @@ def student_profile(request):
                 # If no date field exists, set date_joined to None
                 student_data['date_joined'] = None
             
-            return render(request, 'students/profile.html', {'student': student_data, 'is_admin_flag': admin_flag})
+            # Fetch activity counts
+            activity_counts = {
+                'journal_count': 0,
+                'mood_count': 0,
+                'streak': 0
+            }
+            
+            try:
+                # Get journal count
+                journal_response = supabase.table("journals").select("id", count="exact").eq("student_id", student['id']).execute()
+                activity_counts['journal_count'] = journal_response.count if hasattr(journal_response, 'count') else len(journal_response.data) if journal_response.data else 0
+            except Exception as e:
+                print(f"Error fetching journal count: {e}")
+            
+            try:
+                # Get mood entries and calculate streak
+                mood_response = supabase.table("moods").select("created_at").eq("student_id", student['id']).order("created_at", desc=True).execute()
+                if mood_response.data:
+                    activity_counts['mood_count'] = len(mood_response.data)
+                    # Calculate streak from mood entries
+                    activity_counts['streak'] = calculate_mood_streak(mood_response.data)
+            except Exception as e:
+                print(f"Error fetching mood count: {e}")
+            
+            return render(request, 'students/profile.html', {
+                'student': student_data, 
+                'is_admin_flag': admin_flag,
+                'activity_counts': activity_counts
+            })
     except Exception as e:
         print(f"Error fetching student profile: {e}")
     
@@ -775,19 +845,26 @@ def save_mood(request):
     try:
         data = json.loads(request.body)
         mood = data.get('mood')
-        mood_emoji = data.get('mood_emoji')
         score = data.get('score')
         date = data.get('date', datetime.now().isoformat())
         
         if not mood or score is None:
             return JsonResponse({'success': False, 'error': 'Missing required fields'}, status=400)
         
+        # Convert date to ISO format if needed
+        if not date.endswith('Z') and not '+' in date[-6:]:
+            # If no timezone, assume it's already in correct format or add Z
+            if 'T' not in date:
+                # If just date, add time
+                date = date + 'T00:00:00Z'
+            elif not date.endswith('Z') and '+' not in date:
+                date = date + 'Z'
+        
         mood_data = {
             "student_id": student['id'],
-            "mood": mood,
-            "mood_emoji": mood_emoji,
-            "score": score,
-            "date": date
+            "mood_text": mood,
+            "mood_value": int(score),  # Ensure it's an integer
+            "created_at": date
         }
         
         response = supabase.table("moods").insert(mood_data).execute()
@@ -809,17 +886,34 @@ def get_moods(request):
     if not student:
         return JsonResponse({'success': False, 'error': 'Not authenticated'}, status=401)
     
+    # Check if Supabase is configured
+    if supabase is None:
+        return JsonResponse({'success': False, 'error': 'Supabase is not configured'}, status=500)
+    
     try:
-        response = supabase.table("moods").select("*").eq("student_id", student['id']).order("date", desc=True).execute()
+        # Fetch moods for the student - try without ordering first
+        response = supabase.table("moods").select("*").eq("student_id", student['id']).execute()
         
         if response.data:
-            return JsonResponse({'success': True, 'moods': response.data})
+            # Sort by created_at in Python if needed (descending - most recent first)
+            moods = response.data
+            try:
+                # Sort by created_at field
+                moods.sort(key=lambda x: x.get('created_at', ''), reverse=True)
+            except:
+                # If sorting fails, just use the data as-is
+                pass
+            return JsonResponse({'success': True, 'moods': moods})
         else:
             return JsonResponse({'success': True, 'moods': []})
             
     except ConnectError as e:
+        print(f"Connection error in get_moods: {e}")
         return JsonResponse({'success': False, 'error': 'Connection error'}, status=503)
     except Exception as e:
+        print(f"Error in get_moods: {e}")
+        import traceback
+        traceback.print_exc()
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 # Journal CRUD
@@ -842,29 +936,41 @@ def create_journal(request):
     if not student:
         return JsonResponse({'success': False, 'error': 'Not authenticated'}, status=401)
     
+    # Check if Supabase is configured
+    from .supabase_client import supabase
+    if supabase is None:
+        return JsonResponse({'success': False, 'error': 'Supabase is not configured'}, status=500)
+    
     try:
         data = json.loads(request.body)
         content = data.get('content')
-        title = data.get('title', 'Untitled')
+        title = data.get('title', 'Journal Reflection')
         
         if not content:
             return JsonResponse({'success': False, 'error': 'Content is required'}, status=400)
+        
+        # Get current time in UTC for consistent storage
+        from datetime import timezone
+        now_utc = datetime.now(timezone.utc)
         
         journal_data = {
             "student_id": student['id'],
             "title": title,
             "content": content,
-            "created_at": datetime.now().isoformat()
+            "created_at": now_utc.isoformat()
         }
         
         response = supabase.table("journals").insert(journal_data).execute()
         
-        if response.data:
+        if response.data and len(response.data) > 0:
             return JsonResponse({'success': True, 'journal': response.data[0]})
         else:
-            return JsonResponse({'success': False, 'error': 'Failed to create journal'}, status=500)
+            return JsonResponse({'success': False, 'error': 'Failed to create journal - no data returned'}, status=500)
             
     except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"Error creating journal: {error_details}")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 def update_journal(request, journal_id):

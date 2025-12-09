@@ -58,29 +58,136 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!dateString) return 'N/A';
         
         try {
-            // Parse the date string (assuming ISO format from Supabase)
-            const date = new Date(dateString);
+            // Parse the date string
+            let date;
             
-            // Convert to Philippine Time (UTC+8)
-            // Get UTC time and add 8 hours
-            const utcTime = date.getTime() + (date.getTimezoneOffset() * 60 * 1000);
-            const phTime = new Date(utcTime + (8 * 60 * 60 * 1000));
+            // Handle different datetime formats from Supabase/Django
+            // Journal entries: datetime.now(timezone.utc).isoformat() -> has timezone (UTC) 
+            // Posts/Comments: datetime.now().isoformat() -> no timezone
+            // Since Django USE_TZ=False with TIME_ZONE='Asia/Manila',
+            // datetime.now() returns Manila time without timezone info
+            // The datetime string is ALREADY in Manila time, so we should display it as-is
+            if (!dateString.endsWith('Z') && !dateString.match(/[+-]\d{2}:\d{2}$/)) {
+                // No timezone info - this is already Manila time from Django
+                // Parse it and format directly without timezone conversion
+                const parts = dateString.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/);
+                
+                if (parts) {
+                    const year = parseInt(parts[1]);
+                    const month = parseInt(parts[2]) - 1; // JS months are 0-indexed
+                    const day = parseInt(parts[3]);
+                    const hour = parseInt(parts[4]);
+                    const minute = parseInt(parts[5]);
+                    const second = parseInt(parts[6]);
+                    
+                    // Format directly as Manila time without conversion
+                    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                                      'July', 'August', 'September', 'October', 'November', 'December'];
+                    const monthName = monthNames[month];
+                    const period = hour >= 12 ? 'PM' : 'AM';
+                    const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+                    const displayMinute = minute.toString().padStart(2, '0');
+                    const displaySecond = second.toString().padStart(2, '0');
+                    
+                    // Format as: "MM/DD/YYYY, HH:MM:SS AM/PM PHT"
+                    const monthStr = (month + 1).toString().padStart(2, '0');
+                    const dayStr = day.toString().padStart(2, '0');
+                    const hourStr = displayHour.toString().padStart(2, '0');
+                    
+                    return `${monthStr}/${dayStr}/${year}, ${hourStr}:${displayMinute}:${displaySecond} ${period} PHT`;
+                } else {
+                    // Fallback: try parsing as-is
+                    date = new Date(dateString);
+                }
+            } else {
+                // Has timezone info, parse directly and convert to Manila
+                date = new Date(dateString);
+            }
             
-            // Format: MM/DD/YYYY, h:mm:ss A PHT
-            const month = String(phTime.getMonth() + 1).padStart(2, '0');
-            const day = String(phTime.getDate()).padStart(2, '0');
-            const year = phTime.getFullYear();
-            const hours = phTime.getHours();
-            const minutes = String(phTime.getMinutes()).padStart(2, '0');
-            const seconds = String(phTime.getSeconds()).padStart(2, '0');
+            // For datetimes with timezone, convert to Manila time
+            if (date && !isNaN(date.getTime())) {
+                const formatter = new Intl.DateTimeFormat('en-US', {
+                    timeZone: 'Asia/Manila',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: true
+                });
+                
+                const formatted = formatter.format(date);
+                const parts = formatted.split(', ');
+                if (parts.length === 2) {
+                    const datePart = parts[0].split('/');
+                    const timePart = parts[1].split(' ');
+                    const timeComponents = timePart[0].split(':');
+                    const period = timePart[1].toUpperCase();
+                    
+                    return `${datePart[0]}/${datePart[1]}/${datePart[2]}, ${timeComponents[0]}:${timeComponents[1]}:${timeComponents[2]} ${period} PHT`;
+                }
+                return formatted;
+            }
             
-            const ampm = hours >= 12 ? 'PM' : 'AM';
-            const displayHours = hours % 12 || 12;
+            // Fallback
+            if (isNaN(date.getTime())) {
+                console.error('Invalid date:', dateString);
+                return dateString;
+            }
             
-            return `${month}/${day}/${year}, ${displayHours}:${minutes}:${seconds} ${ampm} PHT`;
+            return dateString;
+            
+            // Check if date is valid
+            if (isNaN(date.getTime())) {
+                console.error('Invalid date:', dateString);
+                return dateString;
+            }
+            
+            // Use the most reliable method: toLocaleString with Asia/Manila timezone
+            // This correctly handles all timezone conversions
+            const formatter = new Intl.DateTimeFormat('en-US', {
+                timeZone: 'Asia/Manila',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            });
+            
+            // Format the date
+            const formatted = formatter.format(date);
+            
+            // Parse the formatted string: "MM/DD/YYYY, HH:MM:SS AM/PM"
+            const parts = formatted.split(', ');
+            if (parts.length !== 2) {
+                // Fallback parsing
+                const datePart = parts[0].split('/');
+                const timePart = parts[1] ? parts[1].split(' ') : ['00:00:00', 'AM'];
+                const timeComponents = timePart[0].split(':');
+                const period = timePart[1] || 'AM';
+                
+                return `${datePart[0]}/${datePart[1]}/${datePart[2]}, ${timeComponents[0]}:${timeComponents[1]}:${timeComponents[2] || '00'} ${period} PHT`;
+            }
+            
+            const datePart = parts[0].split('/');
+            const timePart = parts[1].split(' ');
+            const timeComponents = timePart[0].split(':');
+            const period = timePart[1].toUpperCase();
+            
+            const month = datePart[0];
+            const day = datePart[1];
+            const year = datePart[2];
+            const hour = timeComponents[0].padStart(2, '0');
+            const minute = timeComponents[1].padStart(2, '0');
+            const second = (timeComponents[2] || '00').padStart(2, '0');
+            
+            return `${month}/${day}/${year}, ${hour}:${minute}:${second} ${period} PHT`;
         } catch (e) {
-            console.error('Error formatting date:', e);
-            return dateString; // Return original if formatting fails
+            console.error('Error formatting date:', e, 'Input:', dateString);
+            return dateString;
         }
     }
 

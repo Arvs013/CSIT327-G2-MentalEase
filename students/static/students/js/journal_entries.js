@@ -19,23 +19,79 @@ function formatPhilippineTime(dateString) {
     if (!dateString) return 'N/A';
     
     try {
-        const date = new Date(dateString);
-        const utcTime = date.getTime() + (date.getTimezoneOffset() * 60 * 1000);
-        const phTime = new Date(utcTime + (8 * 60 * 60 * 1000));
+        // Parse the date string
+        let date;
         
-        const month = String(phTime.getMonth() + 1).padStart(2, '0');
-        const day = String(phTime.getDate()).padStart(2, '0');
-        const year = phTime.getFullYear();
-        const hours = phTime.getHours();
-        const minutes = String(phTime.getMinutes()).padStart(2, '0');
-        const seconds = String(phTime.getSeconds()).padStart(2, '0');
+        // If the string doesn't have timezone info (no Z, +, or -), 
+        // we need to determine if it's UTC or local time
+        // Since Django USE_TZ=False with TIME_ZONE='Asia/Manila',
+        // datetime.now() returns Manila time without timezone info
+        // So we'll treat it as Manila time already
+        if (!dateString.endsWith('Z') && !dateString.match(/[+-]\d{2}:\d{2}$/)) {
+            // No timezone info - assume it's already in Manila time (from Django)
+            // But we need to parse it correctly
+            // Try parsing as-is first
+            date = new Date(dateString);
+            
+            // If that doesn't work or seems wrong, try adding timezone
+            if (isNaN(date.getTime())) {
+                // Try adding Z to treat as UTC
+                date = new Date(dateString + 'Z');
+            }
+        } else {
+            // Has timezone info, parse directly
+            date = new Date(dateString);
+        }
         
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-        const displayHours = hours % 12 || 12;
+        // Check if date is valid
+        if (isNaN(date.getTime())) {
+            console.error('Invalid date:', dateString);
+            return dateString;
+        }
         
-        return `${month}/${day}/${year}, ${displayHours}:${minutes}:${seconds} ${ampm} PHT`;
+        // Use the most reliable method: toLocaleString with Asia/Manila timezone
+        // This correctly handles all timezone conversions
+        const formatter = new Intl.DateTimeFormat('en-US', {
+            timeZone: 'Asia/Manila',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        });
+        
+        // Format the date
+        const formatted = formatter.format(date);
+        
+        // Parse the formatted string: "MM/DD/YYYY, HH:MM:SS AM/PM"
+        const parts = formatted.split(', ');
+        if (parts.length !== 2) {
+            // Fallback parsing
+            const datePart = parts[0].split('/');
+            const timePart = parts[1] ? parts[1].split(' ') : ['00:00:00', 'AM'];
+            const timeComponents = timePart[0].split(':');
+            const period = timePart[1] || 'AM';
+            
+            return `${datePart[0]}/${datePart[1]}/${datePart[2]}, ${timeComponents[0]}:${timeComponents[1]}:${timeComponents[2] || '00'} ${period} PHT`;
+        }
+        
+        const datePart = parts[0].split('/');
+        const timePart = parts[1].split(' ');
+        const timeComponents = timePart[0].split(':');
+        const period = timePart[1].toUpperCase();
+        
+        const month = datePart[0];
+        const day = datePart[1];
+        const year = datePart[2];
+        const hour = timeComponents[0].padStart(2, '0');
+        const minute = timeComponents[1].padStart(2, '0');
+        const second = (timeComponents[2] || '00').padStart(2, '0');
+        
+        return `${month}/${day}/${year}, ${hour}:${minute}:${second} ${period} PHT`;
     } catch (e) {
-        console.error('Error formatting date:', e);
+        console.error('Error formatting date:', e, 'Input:', dateString);
         return dateString;
     }
 }
@@ -201,13 +257,22 @@ function openEditModal(id) {
         editTextarea.value = entry.content || '';
     }
     if (editModal) {
-        editModal.style.display = 'block';
+        editModal.style.display = 'flex';
+        editModal.classList.add('show');
+        // Focus textarea after modal opens
+        setTimeout(() => {
+            if (editTextarea) editTextarea.focus();
+        }, 100);
     }
 }
 
 function closeEditModalFunc() {
-    if (editModal) editModal.style.display = 'none';
+    if (editModal) {
+        editModal.style.display = 'none';
+        editModal.classList.remove('show');
+    }
     currentEditId = null;
+    if (editTextarea) editTextarea.value = '';
 }
 
 if (closeEditModal) closeEditModal.addEventListener('click', closeEditModalFunc);
@@ -245,8 +310,10 @@ if (editForm) {
                 }
                 filterAndSort();
                 closeEditModalFunc();
+                // Show success message
+                showNotification('Journal entry updated successfully!', 'success');
             } else {
-                alert('Failed to update entry: ' + (data.error || 'Unknown error'));
+                showNotification('Failed to update entry: ' + (data.error || 'Unknown error'), 'error');
             }
         } catch (error) {
             alert('Failed to update entry: ' + error.message);
@@ -258,16 +325,51 @@ if (editForm) {
 // ===== Delete Journal Entry =====
 function openDeleteModal(id) {
     currentDeleteId = id;
-    if (deleteModal) deleteModal.style.display = 'block';
+    if (deleteModal) {
+        deleteModal.style.display = 'flex';
+        deleteModal.classList.add('show');
+    }
 }
 
 function closeDeleteModalFunc() {
-    if (deleteModal) deleteModal.style.display = 'none';
+    if (deleteModal) {
+        deleteModal.style.display = 'none';
+        deleteModal.classList.remove('show');
+    }
     currentDeleteId = null;
 }
 
 if (closeDeleteModal) closeDeleteModal.addEventListener('click', closeDeleteModalFunc);
 if (cancelDeleteBtn) cancelDeleteBtn.addEventListener('click', closeDeleteModalFunc);
+
+// Close modals when clicking outside
+if (editModal) {
+    editModal.addEventListener('click', (e) => {
+        if (e.target === editModal) {
+            closeEditModalFunc();
+        }
+    });
+}
+
+if (deleteModal) {
+    deleteModal.addEventListener('click', (e) => {
+        if (e.target === deleteModal) {
+            closeDeleteModalFunc();
+        }
+    });
+}
+
+// Close modals on Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        if (editModal && editModal.style.display === 'flex') {
+            closeEditModalFunc();
+        }
+        if (deleteModal && deleteModal.style.display === 'flex') {
+            closeDeleteModalFunc();
+        }
+    }
+});
 
 if (confirmDeleteBtn) {
     confirmDeleteBtn.addEventListener('click', async () => {
@@ -287,8 +389,10 @@ if (confirmDeleteBtn) {
                 journalEntries = journalEntries.filter(e => e.id != currentDeleteId);
                 filterAndSort();
                 closeDeleteModalFunc();
+                // Show success message
+                showNotification('Journal entry deleted successfully!', 'success');
             } else {
-                alert('Failed to delete entry: ' + (data.error || 'Unknown error'));
+                showNotification('Failed to delete entry: ' + (data.error || 'Unknown error'), 'error');
             }
         } catch (error) {
             alert('Failed to delete entry: ' + error.message);
@@ -296,6 +400,64 @@ if (confirmDeleteBtn) {
         }
     });
 }
+
+// ===== Notification Function =====
+function showNotification(message, type = 'success') {
+    // Remove existing notification if any
+    const existing = document.querySelector('.journal-notification');
+    if (existing) existing.remove();
+    
+    const notification = document.createElement('div');
+    notification.className = 'journal-notification';
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 1rem 1.5rem;
+        border-radius: 0.5rem;
+        color: white;
+        font-weight: 600;
+        z-index: 10000;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        animation: slideInRight 0.3s ease-out;
+        ${type === 'success' 
+            ? 'background: linear-gradient(135deg, #10b981 0%, #059669 100%);' 
+            : 'background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);'}
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideOutRight 0.3s ease-out';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Add notification animations to CSS
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    @keyframes slideOutRight {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(style);
 
 // ===== Initialize =====
 if (document.readyState === 'loading') {
