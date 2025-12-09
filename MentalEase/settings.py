@@ -24,7 +24,36 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-9&@n+s9asap=#&py!5$f)+-p8_0(_!g2a4d8xj+tchfp*yd)14')
 
 # SECURITY WARNING: don't run with debug turned on in production!
+# For debugging 500 errors, temporarily set DEBUG=True
+# In production, set DEBUG=False via environment variable
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
+
+# Logging configuration to help debug issues
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'students': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+}
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',') if os.getenv('ALLOWED_HOSTS') else ['*']
 

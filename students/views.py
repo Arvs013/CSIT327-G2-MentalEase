@@ -7,7 +7,7 @@ from .supabase_client import supabase  # make sure you have supabase_client.py c
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from httpx import ConnectError
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseServerError
 from django.views.generic import UpdateView
 from django.db.models import Q, Count
 from django.utils import timezone
@@ -32,6 +32,13 @@ try:
 except ImportError:
     PIL_AVAILABLE = False
     Image = None
+
+# Helper function to check if Supabase is available
+def check_supabase():
+    """Check if Supabase client is available and return error message if not"""
+    if supabase is None:
+        return "Supabase is not configured. Please set SUPABASE_URL and SUPABASE_KEY environment variables."
+    return None
 
 
 # Home Page
@@ -85,6 +92,12 @@ def signup_view(request):
                 "created_at": datetime.now().isoformat()  # Add created_at timestamp for Member Since
             }
 
+            # Check if Supabase is configured
+            supabase_error = check_supabase()
+            if supabase_error:
+                messages.error(request, f"❌ Configuration Error: {supabase_error}")
+                return render(request, 'students/signup.html', {'form': form})
+            
             try:
                 # Check if username already exists
                 try:
@@ -260,6 +273,12 @@ def login_view(request):
     if request.method == 'POST':
         form = StudentLoginForm(request.POST)
         if form.is_valid():
+            # Check if Supabase is configured
+            supabase_error = check_supabase()
+            if supabase_error:
+                messages.error(request, f"❌ Configuration Error: {supabase_error}")
+                return render(request, 'students/login.html', {'form': form})
+            
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
 

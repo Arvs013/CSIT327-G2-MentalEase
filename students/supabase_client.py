@@ -1,27 +1,32 @@
 from supabase import create_client
 import os
 from dotenv import load_dotenv
+import logging
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
-# Validate that environment variables are set
-if not SUPABASE_URL or not SUPABASE_KEY:
-    raise ValueError(
-        "❌ Supabase credentials are missing!\n"
-        "Please create a .env file in the project root with:\n"
-        "SUPABASE_URL=https://<your-project>.supabase.co\n"
-        "SUPABASE_KEY=<your-anon-key>\n\n"
-        "Get your credentials from: https://app.supabase.com/project/_/settings/api"
+# Initialize supabase client only if both URL and KEY are provided
+if SUPABASE_URL and SUPABASE_KEY:
+    try:
+        # Validate URL format
+        if SUPABASE_URL.startswith("https://") and ".supabase.co" in SUPABASE_URL:
+            supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+            logger.info("Supabase client initialized successfully")
+        else:
+            logger.warning(f"Invalid SUPABASE_URL format: {SUPABASE_URL}")
+            supabase = None
+    except Exception as e:
+        logger.error(f"Failed to initialize Supabase client: {e}")
+        supabase = None
+else:
+    logger.warning(
+        "Supabase credentials are missing! "
+        "Set SUPABASE_URL and SUPABASE_KEY environment variables. "
+        "Some features may not work."
     )
-
-# Validate URL format
-if not SUPABASE_URL.startswith("https://") or ".supabase.co" not in SUPABASE_URL:
-    raise ValueError(
-        f"❌ Invalid SUPABASE_URL format: {SUPABASE_URL}\n"
-        "URL should be in format: https://<your-project>.supabase.co"
-    )
-
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+    supabase = None
