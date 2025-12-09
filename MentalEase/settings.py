@@ -21,12 +21,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-9&@n+s9asap=#&py!5$f)+-p8_0(_!g2a4d8xj+tchfp*yd)14'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-9&@n+s9asap=#&py!5$f)+-p8_0(_!g2a4d8xj+tchfp*yd)14')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',') if os.getenv('ALLOWED_HOSTS') else ['*']
 
 
 # Application definition
@@ -120,22 +120,21 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     BASE_DIR / "students" / "static",
 ]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = "students.Student"
+
 # Supabase configuration
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
-
 LOGIN_URL = '/students/login/'
 LOGIN_REDIRECT_URL = '/students/dashboard/'
 LOGOUT_REDIRECT_URL = '/students/login/'
-
-AUTH_USER_MODEL = "students.Student"
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
